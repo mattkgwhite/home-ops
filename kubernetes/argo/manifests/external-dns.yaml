@@ -1,0 +1,72 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: external-dns
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: external-dns
+  namespace: external-dns
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: "5m"
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: 1password
+  target:
+    name: external-dns-secret
+    creationPolicy: Owner
+  data:
+    - secretKey: aws-access-key
+      remoteRef:
+        key: aws
+        property: aws-access-key
+    - secretKey: secret-access-key
+      remoteRef:
+        key: aws
+        property: secret-access-key
+    - secretKey: cloudflare-api-key
+      remoteRef:
+        key: external-dns
+        property: cloudflare-token
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-dns
+  namespace: argocd
+spec:
+  destination:
+    namespace: external-dns
+    server: https://kubernetes.default.svc
+  project: homelab
+  source:
+    chart: external-dns
+    repoURL: https://kubernetes-sigs.github.io/external-dns/
+    targetRevision: 1.15.2
+    helm:
+      valuesObject:
+        provider:
+          name: cloudflare
+        fullnameOverride: external-dns
+        policy: sync
+        registry: txt
+        txtOwnerId: kubernetes
+        sources:
+          - service
+          - crd
+        env:
+          - name: CF_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: external-dns
+                key: cloudflare-api-key
+        extraArgs:
+          - "--annotation-filter=external-dns.custom/type in (public)"
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
