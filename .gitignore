@@ -16,3 +16,27 @@ xanmanning.k3s*
 .terraform
 .terraform.tfstate*
 terraform.tfstate*
+
+# Secrets
+*.pub
+*.key
+*.decrypted~*.yaml
+/age.key
+/cloudflare-tunnel.json
+/github-deploy.key
+/github-deploy.key.pub
+/github-push-token.txt
+
+# Template config files
+/cluster.yaml
+/nodes.yaml
+/talos/nodes/controlplane.yaml
+# Kubernetes
+kubeconfig
+kubernetes/flux/talos/talconfig.yaml
+# Misc.
+.private/
+.task/
+.venv/
+.DS_Store
+Thumbs.db

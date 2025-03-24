@@ -16,3 +16,13 @@ creation_rules:
   - encrypted_regex: "^(data|stringData)$"
     kms: "arn:aws:kms:eu-west-1:474108156746:key/bc5f3b08-70c6-4421-a8ee-f6fe32d94d6f"
     aws_profile: default
+  - path_regex: talos/.*\.sops\.ya?ml
+    mac_only_encrypted: true
+    age: "age1h4cpc8tl30e9ye50zh3y2al8jh4nfgr4gj6k9v26jegyzd7ez5sq8mns5h"
+  - path_regex: (bootstrap|kubernetes)/.*\.sops\.ya?ml
+    encrypted_regex: "^(data|stringData)$"
+    mac_only_encrypted: true
+    age: "age1h4cpc8tl30e9ye50zh3y2al8jh4nfgr4gj6k9v26jegyzd7ez5sq8mns5h"
+stores:
+  yaml:
+    indent: 2
