@@ -39,7 +39,7 @@ spec:
   source:
     chart: argo-cd
     repoURL: https://argoproj.github.io/argo-helm
-    targetRevision: 7.7.7
+    argetRevision: 7.8.14
     helm:
       valuesObject:
         configs:
@@ -48,14 +48,14 @@ spec:
           cm:
             resource.compareoptions: |
               ignoreAggregatedRoles: true
-            url: "https://argocd.localhost"
+            url: "https://argocd.<domain>"
             dex.config: |
               connectors:
                 - type: oidc
                   name: authentik
                   id: authentik
                   config:
-                    issuer: https://authentik.localhost/application/o/argocd/
+                    issuer: https://authentik.nahops.co.uk/application/o/argocd/
                     clientID: argocd
                     clientSecret: $sso:token
                     insecureEnableGroups: true
@@ -218,11 +218,11 @@ metadata:
   name: argocd-extname
   namespace: argocd
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: argocd.localhost
+    external-dns.alpha.kubernetes.io/hostname: argocd.nahops.co.uk
     external-dns.alpha.kubernetes.io/ttl: "300"
 spec:
   type: ExternalName
-  externalName: nginx.localhost
+  externalName: nginx.nahops.co.uk
   sessionAffinity: None
 ---
 apiVersion: networking.k8s.io/v1
@@ -238,10 +238,10 @@ spec:
   ingressClassName: nginx
   tls:
   - hosts:
-    - argocd.localhost
+    - argocd.nahops.co.uk
     secretName: argocd-cert
   rules:
-  - host: argocd.localhost
+  - host: argocd.nahops.co.uk
     http:
       paths:
       - backend:

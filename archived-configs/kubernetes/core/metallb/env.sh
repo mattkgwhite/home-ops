@@ -1,5 +1,0 @@
-HELM_APP_NAMESPACE="metallb-system"
-HELM_REPO_NAME="metallb"
-HELM_REPO_SOURCE="https://metallb.github.io/metallb"
-HELM_APP_NAME="metallb"
-HELM_APP_VERSION="0.14.8"

@@ -16,9 +16,9 @@ server:
       tls:
       - secretName: argocd-cert
         hosts:
-        - argocd.<path:stringreplacesecret#domain>
+        - argocd.nahops.co.uk
       rules:
-      - host: argocd.<path:stringreplacesecret#domain>
+      - host: argocd.nahops.co.uk
         http:
           paths:
           - path: /

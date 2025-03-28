@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: homelab
+  name: default
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -21,7 +21,7 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: homelab-manifest
+  name: default-manifest
   namespace: argocd
 spec:
   goTemplate: true
@@ -68,6 +68,6 @@ spec:
 # type: Opaque
 # stringData:
 #   password: github_pat_xxxxxxxx
-#   url:  https://github.com/xxxxxxxx/argocd-homelab.git
+#   url:  https://github.com/xxxxxxxx/argocd-default.git
 #   username: xxxxxxxx
 #   type: git

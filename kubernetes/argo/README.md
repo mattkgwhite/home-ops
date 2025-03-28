@@ -16,7 +16,7 @@ First you will need the following:
 
 ### 1Password Credentials
 
-- Create a vault called `Homelab`
+- Create a vault called `default`
 - Follow https://developer.1password.com/docs/connect/get-started/#step-1-set-up-a-secrets-automation-workflow 1Password.com tab for generating 1password-credentials.json and save into bootstrap directory.
 - Follow https://developer.1password.com/docs/connect/get-started/#step-1-set-up-a-secrets-automation-workflow 1Password CLI tab for generating a 1password connect token and save as 1password-token.secret in bootstrap directory.
 
@@ -28,3 +28,20 @@ Hubble is a dashboard / visual UI for cilium networking - https://github.com/cil
 
 
 Cilium [Loadbalancer IP Address Management](https://docs.cilium.io/en/stable/network/lb-ipam/)
+
+Cilium CRD locations (need ip pools & l2 announcement policy from the URL below)
+
+- https://github.com/cilium/cilium/tree/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1
+- https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliuml2announcementpolicies.yaml
+
+
+
+### Certificates
+
+Cert Manager CRDs (Need ClusterIssuer)
+- https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.crds.yaml
+
+
+### Secrets
+
+kubectl create secret generic 1passwordconnect --namespace external-secrets --from-literal token=$<token-secret>
