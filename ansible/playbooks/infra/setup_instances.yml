@@ -1,0 +1,17 @@
+---
+- name: Administer Cloud Services
+  hosts: cloud
+  become: true
+  pre_tasks:
+    - name: Install Packages
+      ansible.builtin.apt:
+        update_cache: true
+        name:
+          - vim
+          - curl
+          - wget
+          - iputils-ping
+        state: present
+  roles:
+    - linux_setup
+    - docker

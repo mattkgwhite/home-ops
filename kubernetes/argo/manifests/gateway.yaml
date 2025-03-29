@@ -1,0 +1,153 @@
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: gateway
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gatewaycrds
+  namespace: argocd
+spec:
+  destination:
+    namespace: gateway
+    server: https://kubernetes.default.svc
+  project: homelab
+  source:
+    repoURL: https://github.com/mattkgwhite/empty.git
+    path: .
+    plugin:
+      name: kustomize-inline
+      env:
+        - name: KUSTOMIZATION_YAML
+          value: |-
+            apiVersion: kustomize.config.k8s.io/v1beta1
+            kind: Kustomization
+            resources:
+              - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.2.1/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: internal
+  namespace: gateway
+spec:
+  gatewayClassName: cilium
+  infrastructure:
+    annotations:
+      io.cilium/lb-ipam-ips: 192.168.1.11
+  listeners:
+    - protocol: HTTP
+      port: 80
+      name: http
+      allowedRoutes:
+        namespaces:
+          from: Same
+    - protocol: HTTPS
+      port: 443
+      name: https
+      tls:
+        certificateRefs:
+          - kind: Secret
+            name: wildcard-production
+            namespace: certificate
+      allowedRoutes:
+        namespaces:
+          from: All
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: httpsredirect-internalgw
+  namespace: gateway
+spec:
+  parentRefs:
+    - name: internal
+      namespace: gateway
+      sectionName: http
+  rules:
+    - filters:
+        - requestRedirect:
+            scheme: https
+            statusCode: 301
+          type: RequestRedirect
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: intgw
+  namespace: gateway
+  annotations:
+    external-dns.custom/type: private
+spec:
+  endpoints:
+    - dnsName: intgw.nahops.co.uk
+      recordType: A
+      targets:
+        - "192.168.1.11"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: external
+  namespace: gateway
+spec:
+  gatewayClassName: cilium
+  infrastructure:
+    annotations:
+      io.cilium/lb-ipam-ips: 192.168.1.10
+  listeners:
+    - protocol: HTTP
+      port: 80
+      name: http
+      allowedRoutes:
+        namespaces:
+          from: Same
+    - protocol: HTTPS
+      port: 443
+      name: https
+      tls:
+        certificateRefs:
+          - kind: Secret
+            name: wildcard-production
+            namespace: certificate
+      allowedRoutes:
+        namespaces:
+          from: All
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: httpsredirect-externalgw
+  namespace: gateway
+spec:
+  parentRefs:
+    - name: external
+      namespace: gateway
+      sectionName: http
+  rules:
+    - filters:
+        - requestRedirect:
+            scheme: https
+            statusCode: 301
+          type: RequestRedirect
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: extgw
+  namespace: gateway
+  annotations:
+    external-dns.custom/type: private
+spec:
+  endpoints:
+    - dnsName: extgw.nahops.co.uk
+      recordType: A
+      targets:
+        - "192.168.1.10"
