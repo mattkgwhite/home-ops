@@ -1,0 +1,28 @@
+---
+- name: Node Prepare
+  hosts:
+    - master
+  become: true
+  gather_facts: true
+  any_errors_fatal: true
+  pre_tasks:
+    - name: Pause
+      ansible.builtin.pause:
+        seconds: 2
+  tasks:
+    - name: Locale / Timezone
+    block:
+      - name: Timezone
+        community.general.timezone:
+          name: "{{ timezone | default('Europe/London') }}"
+      
+      - name: Packages | apt update && apt upgrade
+      ansible.builtin.apt:
+        name: "*"
+        state: latest
+        upgrade: yes # will upgrade package if it doesn't effect other packages
+        update_cache: yes
+      
+      - name: Remove depenancies no longer required
+      ansible.builtin.apt:
+        autoremove: yes
