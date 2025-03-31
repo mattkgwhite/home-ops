@@ -67,7 +67,7 @@ spec:
             key: secret-access-key
       selector:
         dnsZones:
-          - '<domain>'
+          - '<path:stringreplacesecret#domain>'
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -91,4 +91,4 @@ spec:
             key: secret-access-key
       selector:
         dnsZones:
-          - '<domain>'
+          - '<path:stringreplacesecret#domain>'
