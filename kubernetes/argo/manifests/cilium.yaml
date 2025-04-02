@@ -13,7 +13,7 @@ spec:
   destination:
     namespace: kube-system
     server: https://kubernetes.default.svc
-  project: homelab
+  project: default
   source:
     repoURL: https://github.com/mattkgwhite/empty.git
     path: .
@@ -46,7 +46,7 @@ spec:
   destination:
     namespace: kube-system
     server: https://kubernetes.default.svc
-  project: homelab
+  project: default
   source:
     chart: cilium
     repoURL: https://helm.cilium.io/
@@ -156,7 +156,7 @@ spec:
   destination:
     namespace: kube-system
     server: https://kubernetes.default.svc
-  project: homelab
+  project: default
   source:
     chart: coredns
     repoURL: https://coredns.github.io/helm
@@ -340,34 +340,34 @@ spec:
   blocks:
     - start: "192.168.2.10"
       stop: "192.168.2.20"
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: metrics-server
-  namespace: argocd
-spec:
-  destination:
-    namespace: kube-system
-    server: https://kubernetes.default.svc
-  project: homelab
-  source:
-    chart: metrics-server
-    repoURL: https://kubernetes-sigs.github.io/metrics-server/
-    targetRevision: 3.12.2
-    helm:
-      valuesObject:
-        args:
-          - --kubelet-insecure-tls
-          - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
-          - --kubelet-use-node-status-port
-          - --metric-resolution=15s
-        metrics:
-          enabled: true
-        serviceMonitor:
-          enabled: false
-  syncPolicy:
-    automated:
-      allowEmpty: true
-      prune: true
-      selfHeal: true
+# ---
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: metrics-server
+#   namespace: argocd
+# spec:
+#   destination:
+#     namespace: kube-system
+#     server: https://kubernetes.default.svc
+#   project: default
+#   source:
+#     chart: metrics-server
+#     repoURL: https://kubernetes-sigs.github.io/metrics-server/
+#     targetRevision: 3.12.2
+#     helm:
+#       valuesObject:
+#         args:
+#           - --kubelet-insecure-tls
+#           - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+#           - --kubelet-use-node-status-port
+#           - --metric-resolution=15s
+#         metrics:
+#           enabled: true
+#         serviceMonitor:
+#           enabled: false
+#   syncPolicy:
+#     automated:
+#       allowEmpty: true
+#       prune: true
+#       selfHeal: true
