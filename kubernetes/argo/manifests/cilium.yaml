@@ -114,7 +114,7 @@ spec:
           externalTrafficPolicy: Local
           secretsNamespace:
             create: false
-            name: certificate
+            name: certificates
   syncPolicy:
     automated:
       allowEmpty: true
