@@ -45,25 +45,21 @@ Cert Manager CRDs (Need ClusterIssuer)
 kubectl create secret generic 1passwordconnect --namespace external-secrets --from-literal token=$<token-secret>
 ```
 
-
 ## Installation
 
-## Base Configuration & Requirements
+### Base Configuration & Requirements
 
 ```shell
-
-
 export SETUP_NODEIP=192.168.1.60
 # I am using a single node, so the SETUP_CLUSTERTOKEN below is not required.
 # export SETUP_CLUSTERTOKEN=randomtokensecret
 
 # CREATE MASTER NODE
-curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.32.1+k3s1" INSTALL_K3S_EXEC="--node-ip $SETUP_NODEIP --disable=coredns,flannel,local-storage,metrics-server,servicelb,traefik --flannel-backend='none' --disable-network-policy --disable-cloud-controller --disable-kube-proxy" K3S_TOKEN=$SETUP_CLUSTERTOKEN K3S_KUBECONFIG_MODE=644 sh -s -
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.32.1+k3s1" INSTALL_K3S_EXEC="--node-ip $SETUP_NODEIP --disable=coredns,flannel,metrics-server,servicelb,traefik --flannel-backend='none' --disable-network-policy --disable-cloud-controller --disable-kube-proxy" K3S_KUBECONFIG_MODE=644 sh K3S_TOKEN=$SETUP_CLUSTERTOKEN -s - 
 kubectl taint nodes rk1-01 node-role.kubernetes.io/control-plane:NoSchedule
 
-
 # INSTALL CILIUM
-export cilium_applicationyaml=$(curl -sL "https://raw.githubusercontent.com/mattkgwhite/home-ops/main/kubernetes/argo/manifests/cilium.yaml" | yq eval-all '. | select(.metadata.name == "cilium" and .kind == "Application")' -)
+export cilium_applicationyaml=$(curl -sL "https://raw.githubusercontent.com/mattkgwhite/home-ops/main/kubernetes/argo/manifests/kube-system.yaml" | yq eval-all '. | select(.metadata.name == "cilium" and .kind == "Application")' -)
 export cilium_name=$(echo "$cilium_applicationyaml" | yq eval '.metadata.name' -)
 export cilium_chart=$(echo "$cilium_applicationyaml" | yq eval '.spec.source.chart' -)
 export cilium_repo=$(echo "$cilium_applicationyaml" | yq eval '.spec.source.repoURL' -)
@@ -74,7 +70,7 @@ export cilium_values=$(echo "$cilium_applicationyaml" | yq eval '.spec.source.he
 echo "$cilium_values" | helm template $cilium_name $cilium_chart --repo $cilium_repo --version $cilium_version --namespace $cilium_namespace --values - | kubectl apply --filename -
 
 # INSTALL COREDNS
-export coredns_applicationyaml=$(curl -sL "https://raw.githubusercontent.com/mattkgwhite/home-ops/main/kubernetes/argo/manifests/cilium.yaml" | yq eval-all '. | select(.metadata.name == "coredns" and .kind == "Application")' -)
+export coredns_applicationyaml=$(curl -sL "https://raw.githubusercontent.com/mattkgwhite/home-ops/main/kubernetes/argo/manifests/kube-system.yaml" | yq eval-all '. | select(.metadata.name == "coredns" and .kind == "Application")' -)
 export coredns_name=$(echo "$coredns_applicationyaml" | yq eval '.metadata.name' -)
 export coredns_chart=$(echo "$coredns_applicationyaml" | yq eval '.spec.source.chart' -)
 export coredns_repo=$(echo "$coredns_applicationyaml" | yq eval '.spec.source.repoURL' -)
@@ -84,41 +80,61 @@ export coredns_values=$(echo "$coredns_applicationyaml" | yq eval '.spec.source.
 
 echo "$coredns_values" | helm template $coredns_name $coredns_chart --repo $coredns_repo --version $coredns_version --namespace $coredns_namespace --values - | kubectl apply --namespace $coredns_namespace --filename -
 
-
 # JOIN NODES TO CLUSTER
 curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.32.1+k3s1" K3S_URL=https://$SETUP_NODEIP:6443 K3S_TOKEN=$SETUP_CLUSTERTOKEN sh -
 # LABEL NODES AS WORKERS
 kubectl label nodes mynodename kubernetes.io/role=worker
 ```
 
+### Secrets
+
+```Shell
+# 1password-cli is required
+## https://developer.1password.com/docs/cli/get-started
+# login via `eval $(op signin)`
+
+export domain="$(op read op://homelab/stringreplacesecret/domain)"
+# export cloudflaretunnelid="$(op read op://homelab/stringreplacesecret/cloudflaretunnelid)"
+export onepasswordconnect_json="$(op read op://homelab/1Password/1password-credentials.json | base64)"
+export externalsecrets_token="$(op read op://homelab/1Password/token)"
+
+kubectl create namespace argocd
+# kubectl create secret generic stringreplacesecret --namespace argocd --from-literal domain=$domain --from-literal cloudflaretunnelid=$cloudflaretunnelid
+
+kubectl create namespace 1passwordconnect
+kubectl create secret generic 1passwordconnect --namespace 1passwordconnect --from-literal 1password-credentials.json="$onepasswordconnect_json"
+
+kubectl create namespace external-secrets
+kubectl create secret generic 1passwordconnect --namespace external-secrets --from-literal token=$externalsecrets_token
+```
 
 ### ArgoCD
 
 Create namespace for ArgoCD and install the default configuration into the ArgoCD namespace
 
 ```shell
-kubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-```
+export argocd_applicationyaml=$(curl -sL "https://raw.githubusercontent.com/mattkgwhite/home-ops/main/kubernetes/argo/manifests/argocd.yaml" | yq eval-all '. | select(.metadata.name == "argocd" and .kind == "Application")' -)
+export argocd_name=$(echo "$argocd_applicationyaml" | yq eval '.metadata.name' -)
+export argocd_chart=$(echo "$argocd_applicationyaml" | yq eval '.spec.source.chart' -)
+export argocd_repo=$(echo "$argocd_applicationyaml" | yq eval '.spec.source.repoURL' -)
+export argocd_namespace=$(echo "$argocd_applicationyaml" | yq eval '.spec.destination.namespace' -)
+export argocd_version=$(echo "$argocd_applicationyaml" | yq eval '.spec.source.targetRevision' -)
+export argocd_values=$(echo "$argocd_applicationyaml" | yq eval '.spec.source.helm.valuesObject' - | yq eval 'del(.configs.cm)' -)
+export argocd_config=$(curl -sL "https://raw.githubusercontent.com/mattkgwhite/home-ops/main/kubernetes/argo/manifests/argocd.yaml" | yq eval-all '. | select(.kind == "AppProject" or .kind == "ApplicationSet")' -)
 
-Access The Argo CD API Server, by updating the service to *LoadBalancer* using for the following command
+# install
+echo "$argocd_values" | helm template $argocd_name $argocd_chart --repo $argocd_repo --version $argocd_version --namespace $argocd_namespace --values - | kubectl apply --namespace $argocd_namespace --filename -
 
-`kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'`
-
-
-
-```shell
-apiVersion: cilium.io/v2alpha1
-kind: CiliumLoadBalancerIPPool
-metadata:
-  name: pool
-spec:
-  blocks:
-    - start: "192.168.2.10"
-      stop: "192.168.2.20"
+# configure
+echo "$argocd_config" | kubectl apply --filename -
 ```
 
 ### CRDs
 
-Cilium CRDs can be found here -https://github.com/cilium/cilium/tree/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1
+- [Cilium](https://github.com/cilium/cilium/tree/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1)
 
+- [Gateway](https://github.com/kubernetes-sigs/gateway-api/tree/main/config/crd/standard)
+
+- [External Secret](https://github.com/external-secrets/external-secrets/tree/main/config/crds/bases)
+
+- Cert-Manager - These are contained within the `release` on Github, for example [v1.17.1](https://github.com/cert-manager/cert-manager/releases/tag/v1.17.1) has a file within assets called `cert-manager.crds.yaml`. This can just be applied using `k apply -f <copy-link-address>`
