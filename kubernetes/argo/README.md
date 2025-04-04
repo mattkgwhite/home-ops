@@ -48,6 +48,50 @@ kubectl create secret generic 1passwordconnect --namespace external-secrets --fr
 
 ## Installation
 
+## Base Configuration & Requirements
+
+```shell
+
+
+export SETUP_NODEIP=192.168.1.60
+# I am using a single node, so the SETUP_CLUSTERTOKEN below is not required.
+# export SETUP_CLUSTERTOKEN=randomtokensecret
+
+# CREATE MASTER NODE
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.32.1+k3s1" INSTALL_K3S_EXEC="--node-ip $SETUP_NODEIP --disable=coredns,flannel,local-storage,metrics-server,servicelb,traefik --flannel-backend='none' --disable-network-policy --disable-cloud-controller --disable-kube-proxy" K3S_TOKEN=$SETUP_CLUSTERTOKEN K3S_KUBECONFIG_MODE=644 sh -s -
+kubectl taint nodes rk1-01 node-role.kubernetes.io/control-plane:NoSchedule
+
+
+# INSTALL CILIUM
+export cilium_applicationyaml=$(curl -sL "https://raw.githubusercontent.com/mattkgwhite/home-ops/main/kubernetes/argo/manifests/cilium.yaml" | yq eval-all '. | select(.metadata.name == "cilium" and .kind == "Application")' -)
+export cilium_name=$(echo "$cilium_applicationyaml" | yq eval '.metadata.name' -)
+export cilium_chart=$(echo "$cilium_applicationyaml" | yq eval '.spec.source.chart' -)
+export cilium_repo=$(echo "$cilium_applicationyaml" | yq eval '.spec.source.repoURL' -)
+export cilium_namespace=$(echo "$cilium_applicationyaml" | yq eval '.spec.destination.namespace' -)
+export cilium_version=$(echo "$cilium_applicationyaml" | yq eval '.spec.source.targetRevision' -)
+export cilium_values=$(echo "$cilium_applicationyaml" | yq eval '.spec.source.helm.valuesObject' - | yq eval 'del(.gatewayAPI)' - | yq eval 'del(.ingressController)' -)
+
+echo "$cilium_values" | helm template $cilium_name $cilium_chart --repo $cilium_repo --version $cilium_version --namespace $cilium_namespace --values - | kubectl apply --filename -
+
+# INSTALL COREDNS
+export coredns_applicationyaml=$(curl -sL "https://raw.githubusercontent.com/mattkgwhite/home-ops/main/kubernetes/argo/manifests/cilium.yaml" | yq eval-all '. | select(.metadata.name == "coredns" and .kind == "Application")' -)
+export coredns_name=$(echo "$coredns_applicationyaml" | yq eval '.metadata.name' -)
+export coredns_chart=$(echo "$coredns_applicationyaml" | yq eval '.spec.source.chart' -)
+export coredns_repo=$(echo "$coredns_applicationyaml" | yq eval '.spec.source.repoURL' -)
+export coredns_namespace=$(echo "$coredns_applicationyaml" | yq eval '.spec.destination.namespace' -)
+export coredns_version=$(echo "$coredns_applicationyaml" | yq eval '.spec.source.targetRevision' -)
+export coredns_values=$(echo "$coredns_applicationyaml" | yq eval '.spec.source.helm.valuesObject' -)
+
+echo "$coredns_values" | helm template $coredns_name $coredns_chart --repo $coredns_repo --version $coredns_version --namespace $coredns_namespace --values - | kubectl apply --namespace $coredns_namespace --filename -
+
+
+# JOIN NODES TO CLUSTER
+curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.32.1+k3s1" K3S_URL=https://$SETUP_NODEIP:6443 K3S_TOKEN=$SETUP_CLUSTERTOKEN sh -
+# LABEL NODES AS WORKERS
+kubectl label nodes mynodename kubernetes.io/role=worker
+```
+
+
 ### ArgoCD
 
 Create namespace for ArgoCD and install the default configuration into the ArgoCD namespace
@@ -73,3 +117,8 @@ spec:
     - start: "192.168.2.10"
       stop: "192.168.2.20"
 ```
+
+### CRDs
+
+Cilium CRDs can be found here -https://github.com/cilium/cilium/tree/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1
+
