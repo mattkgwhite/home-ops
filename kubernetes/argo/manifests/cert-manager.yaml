@@ -20,6 +20,9 @@ spec:
     helm:
       values: |
         installCRDs: "true"
+        extraArgs:
+          - --dns-01-recursive-nameservers-only
+          - --dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53
   syncPolicy:
     automated:
       allowEmpty: true
@@ -29,7 +32,7 @@ spec:
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: cert-manager
+  name: cf-dns
   namespace: cert-manager
 spec:
   refreshInterval: "5m"
@@ -40,10 +43,16 @@ spec:
     name: cert-manager-secret
     creationPolicy: Owner
   data:
-    - secretKey: secret-access-key
+  # Cloudflare
+    - secretKey: key-cloudflare
       remoteRef:
-        key: aws
-        property: secret-access-key
+        key: cf-dns
+        property: cloudflare-argo
+  # AWS Route53
+    # - secretKey: secret-access-key
+    #   remoteRef:
+    #     key: aws
+    #     property: secret-access-key
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -58,16 +67,22 @@ spec:
     privateKeySecretRef:
       name: letsencrypt-staging
     solvers:
+    # - dns01:
+    #     route53:
+    #       region: us-east-1
+    #       accessKeyID: AKIAW4YYMLNFKAG25JMV
+    #       secretAccessKeySecretRef:
+    #         name: cert-manager-secret
+    #         key: secret-access-key
+    #   selector:
+    #     dnsZones:
+    #       - 'nahops.co.uk'
     - dns01:
-        route53:
-          region: us-east-1
-          accessKeyID: AKIAW4YYMLNFKAG25JMV
-          secretAccessKeySecretRef:
-            name: cert-manager-secret
-            key: secret-access-key
-      selector:
-        dnsZones:
-          - 'nahops.co.uk'
+        cloudflare:
+          apiTokenSecretRef:
+            name: cf-dns
+            key: key-cloudflare
+      selector: {}
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -82,13 +97,19 @@ spec:
     privateKeySecretRef:
       name: letsencrypt-production
     solvers:
+    # - dns01:
+    #     route53:
+    #       region: us-east-1
+    #       accessKeyID: AKIAW4YYMLNFKAG25JMV
+    #       secretAccessKeySecretRef:
+    #         name: cert-manager-secret
+    #         key: secret-access-key
+    #   selector:
+    #     dnsZones:
+    #       - 'nahops.co.uk'
     - dns01:
-        route53:
-          region: us-east-1
-          accessKeyID: AKIAW4YYMLNFKAG25JMV
-          secretAccessKeySecretRef:
-            name: cert-manager-secret
-            key: secret-access-key
-      selector:
-        dnsZones:
-          - 'nahops.co.uk'
+        cloudflare:
+          apiTokenSecretRef:
+            name: cf-dns
+            key: key-cloudflare
+      selector: {}

@@ -3,38 +3,10 @@ apiVersion: v1
 metadata:
   name: external-dns
 ---
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: gatewaycrds
-  namespace: argocd
-spec:
-  destination:
-    namespace: external-dns
-    server: https://kubernetes.default.svc
-  project: default
-  source:
-    repoURL: https://github.com/mattkgwhite/empty.git
-    path: .
-    plugin:
-      name: kustomize-inline
-      env:
-        - name: KUSTOMIZATION_YAML
-          value: |-
-            apiVersion: kustomize.config.k8s.io/v1beta1
-            kind: Kustomization
-            resources:
-              - https://raw.githubusercontent.com/kubernetes-sigs/external-dns/refs/heads/master/charts/external-dns/crds/dnsendpoint.yaml
-  syncPolicy:
-    automated:
-      allowEmpty: true
-      prune: true
-      selfHeal: true
----
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: external-dns
+  name: cf-dns
   namespace: external-dns
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
@@ -44,21 +16,12 @@ spec:
     kind: ClusterSecretStore
     name: 1password
   target:
-    name: external-dns-secret
     creationPolicy: Owner
   data:
-    - secretKey: aws-access-key
+    - secretKey: key-cloudflare
       remoteRef:
-        key: aws
-        property: aws-access-key
-    - secretKey: secret-access-key
-      remoteRef:
-        key: aws
-        property: secret-access-key
-    - secretKey: cloudflare-api-key
-      remoteRef:
-        key: external-dns
-        property: cloudflare-token
+        key: cf-dns
+        property: cloudflare-argo
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -89,8 +52,8 @@ spec:
           - name: CF_API_TOKEN
             valueFrom:
               secretKeyRef:
-                name: external-dns
-                key: cloudflare-api-key
+                name: cf-dns
+                key: key-cloudflare
         extraArgs:
           - "--annotation-filter=external-dns.custom/type in (public)"
   syncPolicy:
