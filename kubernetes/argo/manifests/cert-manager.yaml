@@ -41,7 +41,7 @@ spec:
     kind: ClusterSecretStore
     name: 1password
   target:
-    # name: cert-manager-secret
+    name: cert-manager-secret
     creationPolicy: Owner
   data:
   # Cloudflare
