@@ -54,6 +54,12 @@ export SETUP_NODEIP=192.168.1.60
 # I am using a single node, so the SETUP_CLUSTERTOKEN below is not required.
 # export SETUP_CLUSTERTOKEN=randomtokensecret
 
+# CREATE SINGLE NODE
+# K3S has a known issue with using systemd and resolv.conf, shown here - https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/#known-issues
+# The configuration below sets --resolv-conf to be the systemd reference on debian based systems such as Ubuntu Server, as given in the following GitHub comment - https://github.com/k3s-io/k3s/issues/4087#issuecomment-928882824
+
+curl -fL https://get.k3s.io | INSTALL_K3S_CHANNEL=latest sh -s - server --cluster-init --kube-apiserver-arg default-not-ready-toleration-seconds=10 --kube-apiserver-arg default-unreachable-toleration-seconds=10 --disable=coredns,flannel,metrics-server,servicelb,traefik --flannel-backend none --disable-network-policy --disable-cloud-controller --disable-kube-proxy --resolv-conf /run/systemd/resolve/resolv.conf
+
 # CREATE MASTER NODE
 curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="v1.32.1+k3s1" INSTALL_K3S_EXEC="--node-ip $SETUP_NODEIP --disable=coredns,flannel,metrics-server,servicelb,traefik --flannel-backend='none' --disable-network-policy --disable-cloud-controller --disable-kube-proxy" K3S_KUBECONFIG_MODE=644 sh K3S_TOKEN=$SETUP_CLUSTERTOKEN -s - 
 kubectl taint nodes rk1-01 node-role.kubernetes.io/control-plane:NoSchedule
