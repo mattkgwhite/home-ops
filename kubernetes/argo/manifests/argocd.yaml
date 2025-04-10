@@ -115,9 +115,9 @@ spec:
   generators:
     - git:
         repoURL: https://github.com/mattkgwhite/home-ops.git
-        revision: HEAD
+        revision: main
         files:
-          - path: manifest/*.yaml
+          - path: kubernetes/argo/manifest/*.yaml
   template:
     metadata:
       name: '{{ .path.basepath }}'
