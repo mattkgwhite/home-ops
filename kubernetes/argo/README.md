@@ -9,16 +9,19 @@ The configuration within this folder, relates to the declarative Kubernetes conf
 First you will need the following:
 
 - 1Password
-- An AWS Account
-- An IAM User with *Programmatic Access* configuration, and the Access Key and Secret Access Key from that user.
-- A Domain that has been setup with Route53
-- A Virtual Machine with a Public IPv4 Address
+- A Cloudflare Account with a Domain setup.
+- A Server with Kubernetes already installed.
 
 ### 1Password Credentials
 
-- Create a vault called `default`
+- Create a vault called `homelab` or an existing vault.
 - Follow https://developer.1password.com/docs/connect/get-started/#step-1-set-up-a-secrets-automation-workflow 1Password.com tab for generating 1password-credentials.json and save into bootstrap directory.
 - Follow https://developer.1password.com/docs/connect/get-started/#step-1-set-up-a-secrets-automation-workflow 1Password CLI tab for generating a 1password connect token and save as 1password-token.secret in bootstrap directory.
+
+### External DNS & Cloudflare
+
+- In the homelab vault, create a secret called `cf-dns`
+- Follow https://developers.cloudflare.com/fundamentals/api/get-started/create-token/ for generating a token and save into key named cloudflare-token
 
 ### Networking
 
