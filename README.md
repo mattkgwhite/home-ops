@@ -22,7 +22,7 @@ A comprehensive set of tools and configuration for automating a variety of tasks
 |---------------------------------------------------------|----------------------------------------------------------------|----------------|
 | [1Password](https://1password.com/)                     | Secrets with [External Secrets](https://external-secrets.io/)  | ~$55/yr        |
 | [Cloudflare](https://www.cloudflare.com/)               | Pages and DNS                                | ~$30/yr        |
-| [Route53 - Amazon Web Services](https://aws.amazon.com/route53) | Domains used for Service Hosting                                | $45/yr        |
+| [Route53 - Amazon Web Services](https://aws.amazon.com/route53) | Domains used for Service Hosting                                | $ 9/yr per domain    |
 | [GitHub](https://github.com/)                           | Hosting this repository and continuous integration/deployments | Free           |
 | [Let's Encrypt](https://letsencrypt.org/)               | Issuing SSL Certificates with Cert Manager                     | Free           |
 | [M365](https://www.microsoft365.com/)                           | Email Hosting, Office Productivity                                                  | £5/m        |
