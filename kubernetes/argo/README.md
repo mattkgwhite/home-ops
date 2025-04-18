@@ -147,3 +147,7 @@ echo "$argocd_config" | kubectl apply --filename -
 - [External Secret](https://github.com/external-secrets/external-secrets/tree/main/config/crds/bases)
 
 - Cert-Manager - These are contained within the `release` on Github, for example [v1.17.1](https://github.com/cert-manager/cert-manager/releases/tag/v1.17.1) has a file within assets called `cert-manager.crds.yaml`. This can just be applied using `k apply -f <copy-link-address>`
+
+### Utils
+
+- CSI Driver - `sudo apt install cifs-utils`
