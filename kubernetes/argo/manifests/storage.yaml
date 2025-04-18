@@ -1,0 +1,69 @@
+# ---
+# apiVersion: helm.toolkit.fluxcd.io/v2beta1
+# kind: HelmRelease
+# metadata:
+#   name: hcloud-csi-driver
+#   namespace: kube-system
+# spec:
+#   interval: 5m
+#   chart:
+#     spec:
+#       chart: hcloud-csi-driver
+#       version: 1.0.4
+#       sourceRef:
+#         kind: HelmRepository
+#         name: mlohr-charts
+#         namespace: flux-system
+#       interval: 5m
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: storage
+  namespace: argocd
+spec:
+  destination:
+    namespace: kube-system
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: hcloud-csi-driver
+    repoURL: https://charts.hetzner.cloud/
+    targetRevision: 2.13.0
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+# ---
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: cifs-data-pv
+# spec:
+#   accessModes:
+#     - ReadWriteMany
+#   capacity:
+#     storage: 100Gi
+#   flexVolume:
+#     driver: juliohm/cifs
+#     options:
+#       server: u257377.your-storagebox.de
+#       share: /backup
+#     secretRef:
+#       name: cifs
+#       namespace: kube-system
+#   persistentVolumeReclaimPolicy: Retain
+#   storageClassName: ""
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: cifs-data-pvc
+# spec:
+#   accessModes:
+#     - ReadWriteMany
+#   resources:
+#     requests:
+#       storage: 100Gi
+#   storageClassName: ""
