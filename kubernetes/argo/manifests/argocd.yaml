@@ -117,10 +117,10 @@ spec:
         repoURL: https://github.com/mattkgwhite/home-ops.git
         revision: main
         files:
-          - path: kubernetes/argo/manifest/*.yaml
+          - path: kubernetes/argo/manifests/*.yaml
   template:
     metadata:
-      name: '{{ .path.basepath }}'
+      name: '{{ .path.basename }}'
     spec:
       project: default
       source:
