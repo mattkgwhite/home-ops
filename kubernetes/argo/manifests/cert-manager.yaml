@@ -35,13 +35,15 @@ kind: ExternalSecret
 metadata:
   name: cf-dns
   namespace: cert-manager
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   refreshInterval: "5m"
   secretStoreRef:
     kind: ClusterSecretStore
     name: 1password
   target:
-    name: cert-manager-secret
+    # name: cert-manager-secret
     creationPolicy: Owner
   data:
   # Cloudflare
