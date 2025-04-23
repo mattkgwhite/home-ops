@@ -54,3 +54,37 @@ tar -xvzf kustomize_v5.6.0_linux_amd64.tar.gz
 chmod +x kustomize
 sudo mv kustomize /usr/local/bin/
 ```
+
+## Manual Setup Commands
+
+### Cilium
+
+```bash
+# Add the Cilium Helm repository and update
+helm repo add cilium https://helm.cilium.io/
+helm repo update
+
+# Install Cilium
+helm upgrade --install cilium cilium/cilium \
+--namespace=kube-system --version 1.17.2 \
+--values kubernetes/flux/core/kube-system/cilium/values.yml
+```
+
+### CoreDNS
+
+```bash
+# Add the CoreDNS Helm repository and update
+helm repo add coredns https://coredns.github.io/helm
+helm repo update
+
+# Install CoreDNS
+helm upgrade --install coredns coredns/coredns \
+--namespace=kube-system --version 1.39.2 \
+--values kubernetes/flux/core/kube-system/coredns/values.yaml
+```
+
+#### Testing CoreDNS is installed
+
+```bash
+kubectl run -it --rm --restart=Never --image=infoblox/dnstools:latest dnstools
+```

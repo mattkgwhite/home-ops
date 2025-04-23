@@ -31,7 +31,7 @@ servers:
       - name: prometheus
         parameters: 0.0.0.0:9153
       - name: forward
-        parameters: . /etc/resolv.conf /run/systemd/resolve/resolv.conf 8.8.8.8 8.8.4.4
+        parameters: . /etc/resolv.conf 8.8.8.8 8.8.4.4 #/run/systemd/resolve/resolv.conf
       - name: cache
         parameters: 30
       - name: loop
