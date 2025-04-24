@@ -1,4 +1,0 @@
----
-awx_conf: ~/.awx_conf.cfg
-awx_org: nahops
-awx_git_url: https://github.com/mattkgwhite/home-ops.git

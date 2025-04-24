@@ -1,7 +1,0 @@
----
-timezone: Europe/London
-domain: nahops.co.uk
-local_domain: local.nahops.co.uk
-ntp_timezone: "{{ timezone }}"
-locale: en_US.UTF-8
-keyboard_layout: en-gb

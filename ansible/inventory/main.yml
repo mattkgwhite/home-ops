@@ -1,0 +1,34 @@
+all:
+  children:
+    infrastructure:
+      hosts:
+        pve:
+          ansible_host: pve.nahops.co.uk
+          fallback_ip: 192.168.1.10
+          ansible_user: root
+    operating_systems:
+      hosts:
+        ubuntu:
+          ansible_host: ubuntu.example.com
+          fallback_ip: 192.168.1.11
+          ansible_user: ubuntu
+    tools:
+      children:
+        argo:
+          hosts:
+            host1:
+              ansible_host: argo.example.com
+              fallback_ip: 192.168.1.12
+              ansible_user: admin
+        flux:
+          hosts:
+            host2:
+              ansible_host: flux.example.com
+              fallback_ip: 192.168.1.13
+              ansible_user: admin
+        docker:
+          hosts:
+            host3:
+              ansible_host: docker.example.com
+              fallback_ip: 192.168.1.14
+              ansible_user: docker_user
