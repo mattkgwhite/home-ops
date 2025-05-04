@@ -38,9 +38,11 @@ A comprehensive set of tools and configuration for automating a variety of tasks
 | Storage | Hetzner | SMB / Hosted Storage | 4 Euro/mo |
 |    |     |     | Total: ~99 Euro/mo   |
 
-## Core Components
+## Networking
 
 ## Ansible
+
+TBD - Configuration is currently a work in progress
 
 ## Kubernetes
 
@@ -50,4 +52,3 @@ The configurations contain basic functionality of kubernetes that are specific t
 
 Basic functionality, includes SSL (Cert-Manager), DNS (External DNS), Ingress (Gateway / Ingress-Nginx / Kong), Monitoring (Kube-Prometheus-Stack - Grafana, Loki, PrometheusDB), Secret Management (External Secrets & 1Password)
 
-## Networking
