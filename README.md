@@ -26,14 +26,17 @@ A comprehensive set of tools and configuration for automating a variety of tasks
 | [GitHub](https://github.com/)                           | Hosting this repository and continuous integration/deployments | Free           |
 | [Let's Encrypt](https://letsencrypt.org/)               | Issuing SSL Certificates with Cert Manager                     | Free           |
 | [M365](https://www.microsoft365.com/)                           | Email Hosting, Office Productivity                                                  |  ~8$/mo  |
-|                                                         |                                                                | Total: ~$8/mo |
+| [Hetzner Storage-Box](https://www.hetzner.com/storage/storage-box/)                           | Backups, SMB Storage                                  |  ~4$/mo for 1TB |
+|                                                         |                                                                | Total: ~$12/mo |
 
 ### Hardware
 
 | Hosted | Provider | Specs | Pricing |
 | --- | --- | -- | -- |
-| Proxmox | Hetzner | Ryzen 1700x, 64GB RAM, 1 x 1TB NVMe, 3 x 512 SSDs, Unlimited Bandwidth to Public Internet (1GBs) | 80 Euro/month |
-| VPS | Hetzner | 4c, 8GB, 40GB SSD, 20TB Bandwidth to Public Internet | 15 Euro/month |
+| Proxmox | Hetzner | Ryzen 1700x, 64GB RAM, 1 x 1TB NVMe, 3 x 512 SSDs, Unlimited Bandwidth to Public Internet (1GBs) | 80 Euro/mo |
+| VPS | Hetzner | 4c, 8GB, 40GB SSD, 20TB Bandwidth to Public Internet | 15 Euro/mo |
+| Storage | Hetzner | SMB / Hosted Storage | 4 Euro/mo |
+|    |     |     | Total: ~99 Euro/mo   |
 
 ## Core Components
 
