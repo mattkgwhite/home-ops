@@ -104,40 +104,40 @@ spec:
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"
----
-apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
-metadata:
-  name: homelab-manifest
-  namespace: argocd
-spec:
-  goTemplate: true
-  generators:
-    - git:
-        repoURL: https://github.com/mattkgwhite/home-ops.git
-        revision: main
-        files:
-          - path: kubernetes/argo/manifests/*.yaml
-  template:
-    metadata:
-      name: '{{ .path.basename }}'
-    spec:
-      project: default
-      source:
-        repoURL: https://github.com/mattkgwhite/home-ops.git
-        path: '{{ .path.path }}'
-        targetRevision: HEAD
-      destination:
-        server: "https://kubernetes.default.svc"
-        # namespace: '{{ trimSuffix (ext ".yaml") (base .path.filename) }}'
-        namespace: '{{ .path.basename }}'
-      syncPolicy:
-        syncOptions:
-          - CreateNamespace=true
-        automated:
-          prune: true
-          selfHeal: true
-          allowEmpty: true
+# ---
+# apiVersion: argoproj.io/v1alpha1
+# kind: ApplicationSet
+# metadata:
+#   name: homelab-manifest
+#   namespace: argocd
+# spec:
+#   goTemplate: true
+#   generators:
+#     - git:
+#         repoURL: https://github.com/mattkgwhite/home-ops.git
+#         revision: main
+#         files:
+#           - path: kubernetes/argo/manifests/*.yaml
+#   template:
+#     metadata:
+#       name: '{{ .path.basename }}'
+#     spec:
+#       project: default
+#       source:
+#         repoURL: https://github.com/mattkgwhite/home-ops.git
+#         path: '{{ .path.path }}'
+#         targetRevision: HEAD
+#       destination:
+#         server: "https://kubernetes.default.svc"
+#         # namespace: '{{ trimSuffix (ext ".yaml") (base .path.filename) }}'
+#         namespace: '{{ .path.basename }}'
+#       syncPolicy:
+#         syncOptions:
+#           - CreateNamespace=true
+#         automated:
+#           prune: true
+#           selfHeal: true
+#           allowEmpty: true
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
