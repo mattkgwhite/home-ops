@@ -50,7 +50,39 @@ kubectl create secret generic 1passwordconnect --namespace external-secrets --fr
 
 ## Installation
 
-### Base Configuration & Requirements
+## Requirements
+
+The following installs the required CRDs for services that are on the cluster.
+
+Cilium:
+
+```shell
+kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumbgppeeringpolicies.yaml \
+  -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumendpointslices.yaml \
+  -f https://github.com/cilium/cilium/blob/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumgatewayclassconfigs.yaml \
+  -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliuml2announcementpolicies.yaml \
+  -f https://github.com/cilium/cilium/blob/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumpodippools.yaml
+```
+
+Gateway-Api:
+
+```shell
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml \
+  -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/standard/gateway.networking.k8s.io_gateways.yaml \
+  -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml \
+  -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml \
+  -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml
+```
+
+Cert-Manager: 
+
+For cert-manager go onto the official release version and copy the link to the cert-manager.crds.yaml file and then apply that file.
+
+```shell
+kubectl apply -f <cert-manager.crds.yaml from releases>
+```
+
+### Base Configuration
 
 ```shell
 export SETUP_NODEIP=192.168.1.60
