@@ -57,8 +57,6 @@ spec:
               verbs: ["get", "watch", "list"]
         deploymentAnnotations:
           reloader.stakater.com/auto: "true"
-        redis:
-          enabled: true
   syncPolicy:
     automated:
       allowEmpty: true
