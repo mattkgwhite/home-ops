@@ -1,4 +1,9 @@
 ---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: samba
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -99,7 +104,7 @@ apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: hetzner-storagebox
-  namespace: external-dns
+  namespace: samba
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
