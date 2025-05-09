@@ -1,41 +1,13 @@
----
-kind: Namespace
-apiVersion: v1
-metadata:
-  name: vikunja
----
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: vikunja-configsecrets
-  # namespace: vikunja
-  annotations:
-    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-spec:
-  refreshInterval: "5m"
-  secretStoreRef:
-    kind: ClusterSecretStore
-    name: 1password
-  target:
-    creationPolicy: Owner
-  data:
-    - secretKey: jwtsecret
-      remoteRef:
-        key: vikunja
-        property: jwtsecret
-    - secretKey: postgrespassword
-      remoteRef:
-        key: postgres.cluster01.vikunja.owner
-        property: password
-    - secretKey: postgresuser
-      remoteRef:
-        key: postgres.cluster01.vikunja.owner
-        property: username
+# ---
+# kind: Namespace
+# apiVersion: v1
+# metadata:
+#   name: vikunja
 # ---
 # apiVersion: external-secrets.io/v1beta1
 # kind: ExternalSecret
 # metadata:
-#   name: sso
+#   name: vikunja-config
 #   namespace: vikunja
 #   annotations:
 #     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
@@ -45,187 +17,179 @@ spec:
 #     kind: ClusterSecretStore
 #     name: 1password
 #   target:
+#     name: vikunja-config
 #     creationPolicy: Owner
-#     template:
-#       data:
-#         config.yaml: |-
-#           auth:
-#             openid:
-#               enabled: true
-#               redirecturl: https://tasks.nahops.co.uk/auth/openid/
-#               providers:
-#                 - name: authentik
-#                   authurl: https://auth.nahops.co.uk/application/o/vikunja/
-#                   logouturl: https://auth.nahops.co.uk/application/o/vikunja/end-session/
-#                   clientid: "{{ .client_id | toString }}"
-#                   clientsecret: "{{ .client_secret | toString }}"
 #   data:
-#     - secretKey: client_id
+#     - secretKey: jwtsecret
 #       remoteRef:
-#         key: sso
-#         property: vikunja_client_id
-#     - secretKey: client_secret
+#         key: vikunja-config
+#         property: jwtsecret
+#     - secretKey: postgrespassword
 #       remoteRef:
-#         key: sso
-#         property: vikunja_client_secret
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: vikunja-files
-  namespace: vikunja
-  labels:
-    app.kubernetes.io/instance: vikunja
-    app.kubernetes.io/name: vikunja
-spec:
-  accessModes:
-    - "ReadWriteOnce"
-  resources:
-    requests:
-      storage: "2Gi"
-  storageClassName: "hetzner-storagebox"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: vikunja
-  namespace: vikunja
-  labels:
-    app.kubernetes.io/instance: vikunja
-    app.kubernetes.io/name: vikunja
-    app.kubernetes.io/service: vikunja
-spec:
-type: ClusterIP
-ports:
-  - port: 3456
-    targetPort: 3456
-    protocol: TCP
-    name: http
-selector:
-  app.kubernetes.io/component: vikunja
-  app.kubernetes.io/instance: vikunja
-  app.kubernetes.io/name: vikunja
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: vikunja
-  namespace: vikunja
-  labels:
-    app.kubernetes.io/component: vikunja
-    app.kubernetes.io/instance: vikunja
-    app.kubernetes.io/name: vikunja
-spec:
-  strategy:
-    type: Recreate
-  selector:
-    matchLabels:
-      app.kubernetes.io/component: vikunja
-      app.kubernetes.io/name: vikunja
-      app.kubernetes.io/instance: vikunja
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/component: vikunja
-        app.kubernetes.io/instance: vikunja
-        app.kubernetes.io/name: vikunja
-    spec:
-      containers:
-        - env:
-            - name: VIKUNJA_AUTH_LOCAL
-              value: "false"
-            - name: VIKUNJA_DATABASE_TYPE
-              value: postgres
-            - name: VIKUNJA_DATABASE_HOST
-              value: cluster01.postgres
-            - name: VIKUNJA_DATABASE_DATABASE
-              value: vikunja
-            - name: VIKUNJA_DATABASE_SSLMODE
-              value: require
-            - name: VIKUNJA_DATABASE_USER
-              valueFrom:
-                secretKeyRef:
-                  key: postgresuser
-                  name: vikunja-configsecrets
-            - name: VIKUNJA_DATABASE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: postgrespassword
-                  name: vikunja-configsecrets
-            - name: VIKUNJA_SERVICE_PUBLICURL
-              value: https://tasks.nahops.co.uk
-            - name: VIKUNJA_SERVICE_JWTSECRET
-              valueFrom:
-                secretKeyRef:
-                  name: vikunja-configsecrets
-                  key: jwtsecret
-          image: docker.io/vikunja/vikunja:0.24.6
-          name: main
-          volumeMounts:
-            # - mountPath: /etc/vikunja/config.yaml
-            #   name: config
-            #   subPath: config.yaml
-            - mountPath: /app/vikunja/files
-              name: files
-      volumes:
-        # - name: config
-        #   secret:
-        #     secretName: sso
-        - name: files
-          persistentVolumeClaim:
-            claimName: vikunja-files
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: vikunja
-  namespace: vikunja
-spec:
-  parentRefs:
-    - name: internal
-      namespace: gateway
-      sectionName: https
-    - name: external
-      namespace: gateway
-      sectionName: https
-  hostnames:
-    - "tasks.nahops.co.uk"
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /
-      backendRefs:
-        - name: vikunja
-          port: 3456
+#         key: postgres.cluster01.vikunja.owner
+#         property: password
+#     - secretKey: postgresuser
+#       remoteRef:
+#         key: postgres.cluster01.vikunja.owner
+#         property: username
+# ---
+# kind: PersistentVolumeClaim
+# apiVersion: v1
+# metadata:
+#   name: vikunja-files
+#   namespace: vikunja
+#   labels:
+#     app.kubernetes.io/instance: vikunja
+#     app.kubernetes.io/name: vikunja
+# spec:
+#   accessModes:
+#     - "ReadWriteOnce"
+#   resources:
+#     requests:
+#       storage: "2Gi"
+#   storageClassName: "hetzner-storagebox"
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: vikunja
+#   namespace: vikunja
+#   labels:
+#     app.kubernetes.io/instance: vikunja
+#     app.kubernetes.io/name: vikunja
+#     app.kubernetes.io/service: vikunja
+#   spec:
+#     type: ClusterIP
+#     ports:
+#       - port: 3456
+#         targetPort: 3456
+#         protocol: TCP
+#         name: http
+#     selector:
+#       app.kubernetes.io/component: vikunja
+#       app.kubernetes.io/instance: vikunja
+#       app.kubernetes.io/name: vikunja
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: vikunja
+#   namespace: vikunja
+#   labels:
+#     app.kubernetes.io/component: vikunja
+#     app.kubernetes.io/instance: vikunja
+#     app.kubernetes.io/name: vikunja
+# spec:
+#   strategy:
+#     type: Recreate
+#   selector:
+#     matchLabels:
+#       app.kubernetes.io/component: vikunja
+#       app.kubernetes.io/name: vikunja
+#       app.kubernetes.io/instance: vikunja
+#   template:
+#     metadata:
+#       labels:
+#         app.kubernetes.io/component: vikunja
+#         app.kubernetes.io/instance: vikunja
+#         app.kubernetes.io/name: vikunja
+#     spec:
+#       containers:
+#         - env:
+#             - name: VIKUNJA_AUTH_LOCAL
+#               value: "false"
+#             - name: VIKUNJA_DATABASE_TYPE
+#               value: postgres
+#             - name: VIKUNJA_DATABASE_HOST
+#               value: cluster01.postgres
+#             - name: VIKUNJA_DATABASE_DATABASE
+#               value: vikunja
+#             - name: VIKUNJA_DATABASE_SSLMODE
+#               value: require
+#             - name: VIKUNJA_DATABASE_USER
+#               valueFrom:
+#                 secretKeyRef:
+#                   key: postgresuser
+#                   name: vikunja-config
+#             - name: VIKUNJA_DATABASE_PASSWORD
+#               valueFrom:
+#                 secretKeyRef:
+#                   key: postgrespassword
+#                   name: vikunja-config
+#             - name: VIKUNJA_SERVICE_PUBLICURL
+#               value: https://tasks.nahops.co.uk
+#             - name: VIKUNJA_SERVICE_JWTSECRET
+#               valueFrom:
+#                 secretKeyRef:
+#                   name: vikunja-config
+#                   key: jwtsecret
+#           image: docker.io/vikunja/vikunja:0.24.6
+#           name: main
+#           volumeMounts:
+#             # - mountPath: /etc/vikunja/config.yaml
+#             #   name: config
+#             #   subPath: config.yaml
+#             - mountPath: /app/vikunja/files
+#               name: files
+#       volumes:
+#         # - name: config
+#         #   secret:
+#         #     secretName: sso
+#         - name: files
+#           persistentVolumeClaim:
+#             claimName: vikunja-files
+# ---
+# apiVersion: gateway.networking.k8s.io/v1
+# kind: HTTPRoute
+# metadata:
+#   name: vikunja
+#   namespace: vikunja
+# spec:
+#   parentRefs:
+#     - name: internal
+#       namespace: gateway
+#       sectionName: https
+#     - name: external
+#       namespace: gateway
+#       sectionName: https
+#   hostnames:
+#     - "tasks.nahops.co.uk"
+#   rules:
+#     - matches:
+#         - path:
+#             type: PathPrefix
+#             value: /
+#       backendRefs:
+#         - name: vikunja
+#           port: 3456
+# # ---
+# # apiVersion: externaldns.k8s.io/v1alpha1
+# # kind: DNSEndpoint
+# # metadata:
+# #   name: vikunja-public
+# #   namespace: vikunja
+# #   annotations:
+# #     external-dns.custom/type: public
+# # spec:
+# #   endpoints:
+# #     - dnsName: tasks.nahops.co.uk
+# #       recordType: CNAME
+# #       targets:
+# #         - ingress.nahops.co.uk
+# #       providerSpecific:
+# #         - name: external-dns.alpha.kubernetes.io/cloudflare-proxied
+# #           value: "true"
 # ---
 # apiVersion: externaldns.k8s.io/v1alpha1
 # kind: DNSEndpoint
 # metadata:
-#   name: vikunja-public
+#   name: vikunja-private
 #   namespace: vikunja
 #   annotations:
-#     external-dns.custom/type: public
+#     external-dns.custom/type: private
 # spec:
 #   endpoints:
 #     - dnsName: tasks.nahops.co.uk
 #       recordType: CNAME
 #       targets:
-#         - ingress.nahops.co.uk
-#       providerSpecific:
-#         - name: external-dns.alpha.kubernetes.io/cloudflare-proxied
-#           value: "true"
----
-apiVersion: externaldns.k8s.io/v1alpha1
-kind: DNSEndpoint
-metadata:
-  name: vikunja-private
-  namespace: vikunja
-  annotations:
-    external-dns.custom/type: private
-spec:
-  endpoints:
-    - dnsName: tasks.nahops.co.uk
-      recordType: CNAME
-      targets:
-        - intgw.nahops.co.uk
+#         - intgw.nahops.co.uk
