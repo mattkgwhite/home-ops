@@ -1,186 +1,196 @@
----
-kind: Namespace
-apiVersion: v1
-metadata:
-  name: vikunja
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: vikunja-files
-  namespace: vikunja
-  labels:
-    app.kubernetes.io/instance: vikunja
-    app.kubernetes.io/name: vikunja
-spec:
-  accessModes:
-    - "ReadWriteOnce"
-  resources:
-    requests:
-      storage: "2Gi"
-  storageClassName: "hetzner-storagebox"
----
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: vikunja-db
-  namespace: vikunja
-  labels:
-    app.kubernetes.io/instance: vikunja
-    app.kubernetes.io/name: vikunja
-spec:
-  accessModes:
-    - "ReadWriteOnce"
-  resources:
-    requests:
-      storage: "2Gi"
-  storageClassName: "hetzner-storagebox"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: vikunja
-  namespace: vikunja
-  labels:
-    app.kubernetes.io/instance: vikunja
-    app.kubernetes.io/name: vikunja
-    app.kubernetes.io/service: vikunja
-spec:
-  type: ClusterIP
-  ports:
-    - port: 3456
-      targetPort: 3456
-      protocol: TCP
-      name: http
-  selector:
-    app.kubernetes.io/component: vikunja
-    app.kubernetes.io/instance: vikunja
-    app.kubernetes.io/name: vikunja
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: vikunja
-  namespace: vikunja
-  labels:
-    app.kubernetes.io/instance: vikunja
-    app.kubernetes.io/name: vikunja
-    app.kubernetes.io/service: vikunja
-spec:
-  type: ClusterIP
-  ports:
-    - port: 5432
-      targetPort: 5432
-      protocol: TCP
-      name: http
-  selector:
-    app.kubernetes.io/component: vikunja
-    app.kubernetes.io/instance: vikunja
-    app.kubernetes.io/name: vikunja
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: vikunja
-  namespace: argocd
-spec:
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: vikunja
-  project: default
-  source:
-    chart: vikunja
-    repoURL: https://kolaente.dev/api/packages/vikunja/helm  # Replace with your actual repo
-    targetRevision: 0.4.1
-    helm:
-      valuesObject:
-        vikunja:
-          image: vikunja/vikunja
-          name: vikunja
-          env:
-          - name: VIKUNJA_SERVICE_PUBLICURL
-            value: "https://tasks.nahops.co.uk"
-          - name: VIKUNJA_DATABASE_HOST
-            value: "localhost"  # Use localhost since both containers are in the same Pod
-          - name: VIKUNJA_DATABASE_PASSWORD
-            value: "changeme"
-          - name: VIKUNJA_DATABASE_TYPE
-            value: "mysql"
-          - name: VIKUNJA_DATABASE_USER
-            value: "vikunja"
-          - name: VIKUNJA_DATABASE_DATABASE
-            value: "vikunja"
-          - name: VIKUNJA_SERVICE_JWTSECRET
-            value: "a-super-secure-random-secret"
-          - name: VIKUNJA_CORS_ENABLE
-            value: "true"
-          persistence:
-            data:
-              enabled: true
-              size: 2Gi
-              storageClass: hetzner-storagebox
-              mountPath: /app/vikunja/files
-          config-maps:
-            api-config:
-              enabled: false
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: vikunja
-  namespace: vikunja
-spec:
-  parentRefs:
-    - name: internal
-      namespace: gateway
-      sectionName: https
-    - name: external
-      namespace: gateway
-      sectionName: https
-  hostnames:
-    - "tasks.nahops.co.uk"
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /
-      backendRefs:
-        - name: vikunja
-          port: 3456
+# ---
+# kind: Namespace
+# apiVersion: v1
+# metadata:
+#   name: vikunja
+# ---
+# kind: PersistentVolumeClaim
+# apiVersion: v1
+# metadata:
+#   name: vikunja-files
+#   namespace: vikunja
+#   labels:
+#     app.kubernetes.io/instance: vikunja
+#     app.kubernetes.io/name: vikunja
+# spec:
+#   accessModes:
+#     - "ReadWriteOnce"
+#   resources:
+#     requests:
+#       storage: "2Gi"
+#   storageClassName: "hetzner-storagebox"
+# ---
+# kind: PersistentVolumeClaim
+# apiVersion: v1
+# metadata:
+#   name: vikunja-db
+#   namespace: vikunja
+#   labels:
+#     app.kubernetes.io/instance: vikunja
+#     app.kubernetes.io/name: vikunja
+# spec:
+#   accessModes:
+#     - "ReadWriteOnce"
+#   resources:
+#     requests:
+#       storage: "2Gi"
+#   storageClassName: "hetzner-storagebox"
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: vikunja
+#   namespace: vikunja
+#   labels:
+#     app.kubernetes.io/instance: vikunja
+#     app.kubernetes.io/name: vikunja
+#     app.kubernetes.io/service: vikunja
+# spec:
+#   type: ClusterIP
+#   ports:
+#     - port: 3456
+#       targetPort: 3456
+#       protocol: TCP
+#       name: http
+#   selector:
+#     app.kubernetes.io/component: vikunja
+#     app.kubernetes.io/instance: vikunja
+#     app.kubernetes.io/name: vikunja
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: vikunja
+#   namespace: vikunja
+#   labels:
+#     app.kubernetes.io/instance: vikunja
+#     app.kubernetes.io/name: vikunja
+#     app.kubernetes.io/service: vikunja
+# spec:
+#   type: ClusterIP
+#   ports:
+#     - port: 5432
+#       targetPort: 5432
+#       protocol: TCP
+#       name: http
+#   selector:
+#     app.kubernetes.io/component: vikunja
+#     app.kubernetes.io/instance: vikunja
+#     app.kubernetes.io/name: vikunja
+# ---
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: vikunja
+#   namespace: argocd
+# spec:
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: vikunja
+#   project: default
+#   source:
+#     chart: vikunja
+#     repoURL: https://kolaente.dev/api/packages/vikunja/helm  # Replace with your actual repo
+#     targetRevision: 0.4.1
+#     helm:
+#       valuesObject:
+#         vikunja:
+#           image: vikunja/vikunja
+#           name: vikunja
+#           env:
+#           - name: VIKUNJA_SERVICE_PUBLICURL
+#             value: "https://tasks.nahops.co.uk"
+#           - name: VIKUNJA_DATABASE_HOST
+#             value: "localhost"  # Use localhost since both containers are in the same Pod
+#           - name: VIKUNJA_DATABASE_PASSWORD
+#             value: "changeme"
+#           - name: VIKUNJA_DATABASE_TYPE
+#             value: "mysql"
+#           - name: VIKUNJA_DATABASE_USER
+#             value: "vikunja"
+#           - name: VIKUNJA_DATABASE_DATABASE
+#             value: "vikunja"
+#           - name: VIKUNJA_SERVICE_JWTSECRET
+#             value: "a-super-secure-random-secret"
+#           - name: VIKUNJA_CORS_ENABLE
+#             value: "true"
+#           persistence:
+#             data:
+#               enabled: true
+#               accessModes: ReadWriteOnce
+#               size: 2Gi
+#               storageClass: hetzner-storagebox
+#               mountPath: /app/vikunja/files
+#           config-maps:
+#             api-config:
+#               enabled: false
+#           # ingress:
+#           #   enabled: enabled
+#           #   hosts:
+#           #     - host: tasks.nahops.co.uk
+#           #       paths:
+#           #         - path: /
+#           #   tls:
+#           #     - secretName: vikunja-tls
+#           #       hosts:
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true
+#     syncOptions:
+#       - CreateNamespace=true
+# ---
+# apiVersion: gateway.networking.k8s.io/v1
+# kind: HTTPRoute
+# metadata:
+#   name: vikunja
+#   namespace: vikunja
+# spec:
+#   parentRefs:
+#     - name: internal
+#       namespace: gateway
+#       sectionName: https
+#     - name: external
+#       namespace: gateway
+#       sectionName: https
+#   hostnames:
+#     - "tasks.nahops.co.uk"
+#   rules:
+#     - matches:
+#         - path:
+#             type: PathPrefix
+#             value: /
+#       backendRefs:
+#         - name: vikunja
+#           port: 3456
+# # ---
+# # apiVersion: externaldns.k8s.io/v1alpha1
+# # kind: DNSEndpoint
+# # metadata:
+# #   name: vikunja-public
+# #   namespace: vikunja
+# #   annotations:
+# #     external-dns.custom/type: public
+# # spec:
+# #   endpoints:
+# #     - dnsName: tasks.nahops.co.uk
+# #       recordType: CNAME
+# #       targets:
+# #         - ingress.nahops.co.uk
+# #       providerSpecific:
+# #         - name: external-dns.alpha.kubernetes.io/cloudflare-proxied
+# #           value: "true"
 # ---
 # apiVersion: externaldns.k8s.io/v1alpha1
 # kind: DNSEndpoint
 # metadata:
-#   name: vikunja-public
+#   name: vikunja-private
 #   namespace: vikunja
 #   annotations:
-#     external-dns.custom/type: public
+#     external-dns.custom/type: private
 # spec:
 #   endpoints:
 #     - dnsName: tasks.nahops.co.uk
 #       recordType: CNAME
 #       targets:
-#         - ingress.nahops.co.uk
-#       providerSpecific:
-#         - name: external-dns.alpha.kubernetes.io/cloudflare-proxied
-#           value: "true"
----
-apiVersion: externaldns.k8s.io/v1alpha1
-kind: DNSEndpoint
-metadata:
-  name: vikunja-private
-  namespace: vikunja
-  annotations:
-    external-dns.custom/type: private
-spec:
-  endpoints:
-    - dnsName: tasks.nahops.co.uk
-      recordType: CNAME
-      targets:
-        - intgw.nahops.co.uk
+#         - intgw.nahops.co.uk
