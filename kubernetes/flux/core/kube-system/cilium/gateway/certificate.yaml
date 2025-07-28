@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://kubernetes-schemas.ok8.sh/cert-manager.io/certificate_v1.json
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-staging
+  namespace: certificate
+spec:
+  secretName: wildcard-staging
+  issuerRef:
+    name: letsencrypt-staging
+    kind: ClusterIssuer
+  commonName: 'hacksm.co.uk'
+  dnsNames:
+  - 'hacksm.co.uk'
+  - '*.hacksm.co.uk'
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-production
+  namespace: certificate
+spec:
+  secretName: wildcard-production
+  issuerRef:
+    name: letsencrypt-production
+    kind: ClusterIssuer
+  commonName: 'hacksm.co.uk'
+  dnsNames:
+  - 'hacksm.co.uk'
+  - '*.hacksm.co.uk'
