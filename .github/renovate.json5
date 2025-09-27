@@ -1,20 +1,26 @@
 {
-  $schema: "https://docs.renovatebot.com/renovate-schema.json",
-  timezone: "UTC",
-  extends: ["config:base"],
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  timezone: 'UTC',
+  extends: [
+    'config:recommended',
+  ],
   dependencyDashboard: true,
   customManagers: [
     {
-      customType: "regex",
-      fileMatch: ["kustomization.ya??ml$"],
+      customType: 'regex',
+      managerFilePatterns: [
+        '/kustomization.ya??ml$/',
+      ],
       matchStrings: [
-        "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\n*[^/]+://[^/]+/[^/]+/[^/]+/(?<currentValue>[^/]+)/",
+        'datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\n*[^/]+://[^/]+/[^/]+/[^/]+/(?<currentValue>[^/]+)/',
       ],
     },
     {
-      customType: "regex",
-      fileMatch: ["env.sh"],
-      datasourceTemplate: "helm",
+      customType: 'regex',
+      managerFilePatterns: [
+        '/env.sh/',
+      ],
+      datasourceTemplate: 'helm',
       matchStrings: [
         'HELM_REPO_SOURCE="(?<registryUrl>[^"]+)"\n*[^"]+"(?<depName>[^"]+)"\n*[^"]+"(?<currentValue>[^"]+)',
       ],
