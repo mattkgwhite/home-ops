@@ -136,7 +136,7 @@ kubectl label nodes mynodename kubernetes.io/role=worker
 ## https://developer.1password.com/docs/cli/get-started
 # login via `eval $(op signin)`
 
-export domain="$(op read op://homelab/stringreplacesecret/domain)"
+export domain="$(op read op://homelab/stringreplacesecret/domain)" / Powershell example "$env:DOMAIN = & op read "op://homelab/stringreplacesecret/domain" "
 # export cloudflaretunnelid="$(op read op://homelab/stringreplacesecret/cloudflaretunnelid)"
 export onepasswordconnect_json="$(op read op://homelab/1Password/1password-credentials.json | base64)"
 export externalsecrets_token="$(op read op://homelab/1Password/token)"
