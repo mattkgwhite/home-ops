@@ -57,33 +57,31 @@ spec:
               verbs: ["get", "watch", "list"]
         deploymentAnnotations:
           reloader.stakater.com/auto: "true"
+        dex.config: |
+          connectors:
+            - type: oidc
+              name: authentik
+              id: authentik
+              config:
+                issuer: https://<your-authentik-url>/application/o/argocd/
+                clientID: $sso:client_id
+                clientSecret: $sso:client_secret
+                insecureEnableGroups: true
+                scopes:
+                  - openid
+                  - profile
+                  - email
+        rbac:
+          policy.csv: |
+            g, ArgoCD Admin, role:admin
+          # policy.default: ""
+          # policy.matchMode: glob
+          # scopes: '[groups]'
   syncPolicy:
     automated:
       allowEmpty: true
       prune: true
       selfHeal: true
-# ---
-# apiVersion: external-secrets.io/v1beta1
-# kind: ExternalSecret
-# metadata:
-#   name: stringreplacesecret
-#   namespace: argocd
-# spec:
-#   refreshInterval: "5m"
-#   secretStoreRef:
-#     kind: ClusterSecretStore
-#     name: 1password
-#   target:
-#     creationPolicy: Owner
-#   data:
-#     - secretKey: domain
-#       remoteRef:
-#         key: stringreplacesecret
-#         property: domain
-#     - secretKey: cloudflaretunnelid
-#       remoteRef:
-#         key: stringreplacesecret
-#         property: cloudflaretunnelid
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
@@ -102,40 +100,6 @@ spec:
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"
-# ---
-# apiVersion: argoproj.io/v1alpha1
-# kind: ApplicationSet
-# metadata:
-#   name: homelab-manifest
-#   namespace: argocd
-# spec:
-#   goTemplate: true
-#   generators:
-#     - git:
-#         repoURL: https://github.com/mattkgwhite/home-ops.git
-#         revision: main
-#         files:
-#           - path: kubernetes/argo/manifests/*.yaml
-#   template:
-#     metadata:
-#       name: '{{ .path.basename }}'
-#     spec:
-#       project: default
-#       source:
-#         repoURL: https://github.com/mattkgwhite/home-ops.git
-#         path: '{{ .path.path }}'
-#         targetRevision: HEAD
-#       destination:
-#         server: "https://kubernetes.default.svc"
-#         # namespace: '{{ trimSuffix (ext ".yaml") (base .path.filename) }}'
-#         namespace: '{{ .path.basename }}'
-#       syncPolicy:
-#         syncOptions:
-#           - CreateNamespace=true
-#         automated:
-#           prune: true
-#           selfHeal: true
-#           allowEmpty: true
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
