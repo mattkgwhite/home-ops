@@ -48,5 +48,5 @@ Basic functionality, includes SSL (Cert-Manager), DNS (External DNS), Ingress (G
 
 ## Docs
 
-- [ToDo](docs/setup/todo.md)
+- [ToDo](docs/todo.md)
 - [Argo Setup](docs/setup/argo.md)
