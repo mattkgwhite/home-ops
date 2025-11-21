@@ -1,4 +1,3 @@
----
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -7,20 +6,20 @@ metadata:
   name: homelab-manifest
   namespace: argocd
 spec:
-  goTemplate: true
   generators:
     - git:
         files:
           - path: kubernetes/argo/manifests/*.yaml
         repoURL: https://github.com/mattkgwhite/home-ops.git
         revision: main
+  goTemplate: true
   template:
     metadata:
       name: '{{ .path.basename }}'
     spec:
       destination:
         namespace: '{{ .path.basename }}'
-        server: "https://kubernetes.default.svc"
+        server: https://kubernetes.default.svc
       project: default
       source:
         path: '{{ .path.path }}'
@@ -28,8 +27,8 @@ spec:
         targetRevision: HEAD
       syncPolicy:
         automated:
+          allowEmpty: true
           prune: true
           selfHeal: true
-          allowEmpty: true
         syncOptions:
           - CreateNamespace=true
