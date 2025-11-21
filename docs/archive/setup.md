@@ -8,7 +8,7 @@ First you will need the following:
 - A Domain that has been setup with Route53
 - A Virtual Machine with a Public IPv4 Address
 
-## 1Password Credentials
+## Secrets via 1Password Credentials
 
 - Create a vault called `Homelab`
 - Follow https://developer.1password.com/docs/connect/get-started/#step-1-set-up-a-secrets-automation-workflow 1Password.com tab for generating 1password-credentials.json and save into bootstrap directory.
@@ -31,7 +31,7 @@ kubectl create secret generic stringreplacesecret --namespace argocd --from-lite
 
 ## Argocd Install
 
-```
+```shell
 export argocd_applicationyaml=$(curl -sL "https://raw.githubusercontent.com/mattkgwhite/home-ops/main/manifests/argocd.yaml" | yq eval-all '. | select(.metadata.name == "argocd" and .kind == "Application")' -)
 export argocd_name=$(echo "$argocd_applicationyaml" | yq eval '.metadata.name' -)
 export argocd_chart=$(echo "$argocd_applicationyaml" | yq eval '.spec.source.chart' -)
@@ -49,7 +49,7 @@ kubectl apply -f https://raw.githubusercontent.com/mattkgwhite/home-ops/main/boo
 
 ## Argo Install - New Way
 
-```
+```shell
 export argocd_applicationyaml=$(curl -sL "https://raw.githubusercontent.com/mattkgwhite/home-ops/main/manifests/argocd.yaml" | yq eval-all '. | select(.metadata.name == "argocd" and .kind == "Application")' -)
 export argocd_name=$(echo "$argocd_applicationyaml" | yq eval '.metadata.name' -)
 export argocd_chart=$(echo "$argocd_applicationyaml" | yq eval '.spec.source.chart' -)
@@ -66,7 +66,6 @@ echo "$argocd_values" | helm template $argocd_name $argocd_chart --repo $argocd_
 # configure
 echo "$argocd_config" | kubectl apply --filename -
 ```
-
 
 ### Troubleshooting
 

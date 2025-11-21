@@ -38,12 +38,6 @@ A comprehensive set of tools and configuration for automating a variety of tasks
 | Storage | Hetzner | SMB / Hosted Storage | 4 Euro/mo |
 |    |     |     | Total: ~99 Euro/mo   |
 
-## Networking
-
-## Ansible
-
-TBD - Configuration is currently a work in progress
-
 ## Kubernetes
 
 These are the configurations for kuberentes specifically for GitOps applications [ArgoCD](https://argoproj.github.io/cd/) and [FluxCD](https://fluxcd.io/). *These configurations are a work in progress and are subject to change.*
@@ -52,3 +46,7 @@ The configurations contain basic functionality of kubernetes that are specific t
 
 Basic functionality, includes SSL (Cert-Manager), DNS (External DNS), Ingress (Gateway / Ingress-Nginx / Kong), Monitoring (Kube-Prometheus-Stack - Grafana, Loki, PrometheusDB), Secret Management (External Secrets & 1Password)
 
+## Docs
+
+- [ToDo](docs/setup/automation.md)
+- [Argo Setup](docs/setup/argo.md)

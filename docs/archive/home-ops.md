@@ -97,7 +97,6 @@ Authentication services that are waiting to be configured and deployed to the cl
 - Authelia
 - 0Auth
 - Keycloak
--
 
 ### CI/CD
 

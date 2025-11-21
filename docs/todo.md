@@ -1,0 +1,34 @@
+# ToDo
+
+- [X] ArgoCD
+- [X] Secret Management - External Secrets
+- [X] SSL Certificates - Cert Manager
+- [X] DNS Records - External DNS
+- [X] Ingress - Gateway API
+- [X] Storage
+  - [X] Hetzner Storage Box
+  - [X] Local Storage on VM / VPS
+- [ ] Monitoring & Alerting
+  - [ ] Kube-Prometheus-Stack - No Grafana
+  - [ ] Grafana
+- [ ] Security
+  - [ ] SSO - Authentik
+- [ ] Database
+  - [ ] Centralised Cluster / Operator
+- [ ] CI / CD
+  - [ ] Argo Workflows
+  - [ ] Argo Events
+  - [ ] Argo Rollouts
+  - [ ] Argo Image Updater
+- [ ] External Access
+  - [ ] Cloudflared
+- [ ] Terraform
+  - [ ] tf-workspace
+  - [ ] Authentik integration
+- [ ] Backups
+  - [ ] Scheduled / Automated
+  - [ ] External Backups
+- [ ] Automation
+  - [ ] Ansible
+  - [ ] Taskfile
+  - [ ] Documentation
