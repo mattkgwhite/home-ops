@@ -32,3 +32,8 @@
   - [ ] Ansible
   - [ ] Taskfile
   - [ ] Documentation
+
+## Additional Configuration
+
+- [ ] FluxCD
+  - Currently Pending.

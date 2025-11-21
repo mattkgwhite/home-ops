@@ -40,11 +40,19 @@ A comprehensive set of tools and configuration for automating a variety of tasks
 
 ## Kubernetes
 
-These are the configurations for kuberentes specifically for GitOps applications [ArgoCD](https://argoproj.github.io/cd/) and [FluxCD](https://fluxcd.io/). *These configurations are a work in progress and are subject to change.*
+Currently there is only one available configuration for Kubernetes and GitOps which is [ArgoCD](https://argoproj.github.io/cd/). The documentation for this can be found in [Docs -> Setup -> Argo](docs/setup/argo.md)
 
-The configurations contain basic functionality of kubernetes that are specific to both ArgoCD and FluxCD, to test applications or for permanent configuration and deployment.
+There will eventually be a configuration for FluxCD added for a Flux based deployment. *However until further notice this currently on hold, while the Argo configuration completed and documented. These configuration are also subject to change.*
 
-Basic functionality, includes SSL (Cert-Manager), DNS (External DNS), Ingress (Gateway / Ingress-Nginx / Kong), Monitoring (Kube-Prometheus-Stack - Grafana, Loki, PrometheusDB), Secret Management (External Secrets & 1Password)
+Please refer to the documentation previously linked to find what is currently deployed in the Kubernetes. There is an active [ToDo List](docs/todo.md) which will remain as up to date as possible with current pending tasks / deployments and which deployment they are linked to.
+
+There will also be a template / basic configuration for both ArgoCD and FluxCD, to test applications. *For FluxCD this is planned for a later time.*
+
+Basic functionality, includes SSL (Cert-Manager), DNS (External DNS), Ingress (Gateway), Monitoring (Kube-Prometheus-Stack - Grafana, Loki, PrometheusDB), Secret Management (External Secrets & 1Password)
+
+### Kubernetes - Template Clusters
+
+Argo's template cluster can currently be found under [templates -> argo](templates/argo/)
 
 ## Docs
 

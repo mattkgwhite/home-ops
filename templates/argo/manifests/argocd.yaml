@@ -1,0 +1,166 @@
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: argocd
+# ---
+# apiVersion: external-secrets.io/v1beta1
+# kind: ExternalSecret
+# metadata:
+#   name: sso
+#   namespace: argocd
+#   labels:
+#     app.kubernetes.io/part-of: argocd
+# spec:
+#   refreshInterval: "5m"
+#   secretStoreRef:
+#     kind: ClusterSecretStore
+#     name: 1password
+#   target:
+#     creationPolicy: Owner
+#   data:
+#     - secretKey: client_id
+#       remoteRef:
+#         key: sso
+#         property: argocd_client_id
+#     - secretKey: client_secret
+#       remoteRef:
+#         key: sso
+#         property: argocd_client_secret
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+spec:
+  destination:
+    namespace: argocd
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: argo-cd
+    repoURL: https://argoproj.github.io/argo-helm
+    targetRevision: 7.8.14
+    helm:
+      valuesObject:
+        configs:
+          params:
+            server.insecure: true
+          rbac:
+            policy.csv: |
+              g, ArgoCD Admin, role:admin
+        repoServer:
+          rbac:
+            - apiGroups: [""]
+              resources: ["secrets"]
+              verbs: ["get", "watch", "list"]
+        deploymentAnnotations:
+          reloader.stakater.com/auto: "true"
+        dex.config: |
+          connectors:
+            - type: oidc
+              name: authentik
+              id: authentik
+              config:
+                issuer: https://<your-authentik-url>/application/o/argocd/
+                clientID: $sso:client_id
+                clientSecret: $sso:client_secret
+                insecureEnableGroups: true
+                scopes:
+                  - openid
+                  - profile
+                  - email
+        rbac:
+          policy.csv: |
+            g, ArgoCD Admin, role:admin
+          # policy.default: ""
+          # policy.matchMode: glob
+          # scopes: '[groups]'
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: default
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destinations:
+    - name: "*"
+      namespace: "*"
+      server: "*"
+  sourceRepos:
+    - "*"
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: argocd
+  namespace: argocd
+spec:
+  parentRefs:
+    - name: internal
+      namespace: gateway
+      sectionName: https
+  hostnames:
+    - "argocd.<domain>"
+  rules:
+    - backendRefs:
+        - name: argocd-server
+          port: 443
+# ---
+# apiVersion: gateway.networking.k8s.io/v1
+# kind: GRPCRoute
+# metadata:
+#   name: argocd
+#   namespace: argocd
+# spec:
+#   parentRefs:
+#   - name: internal
+#     namespace: gateway
+#     sectionName: https
+#   hostnames:
+#   - "argocd.<domain>"
+#   rules:
+#   - backendRefs:
+#     - name: argocd-server
+#       port: 80
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: argocd-private
+  namespace: argocd
+  annotations:
+    external-dns.custom/type: private
+spec:
+  endpoints:
+    - dnsName: argocd.<domain>
+      recordType: CNAME
+      targets:
+        - intgw.<domain>
+---
+## Private Repository Secret example
+## https://argo-cd.readthedocs.io/en/stable/user-guide/private-repositories/
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: github
+#   namespace: argocd
+#   labels:
+#     argocd.argoproj.io/secret-type: repo-creds
+# type: Opaque
+# stringData:
+#   password: github_pat_xxxxxxxx
+#   url:  https://github.com/xxxxxxxx/argocd-homelab.git
+#   username: xxxxxxxx
+#   type: git
