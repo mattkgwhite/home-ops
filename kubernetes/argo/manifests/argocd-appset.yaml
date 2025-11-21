@@ -3,6 +3,7 @@ kind: ApplicationSet
 metadata:
   labels:
     argocd.argoproj.io/instance: manifests
+    argocd.argoproj.io/ignore-healthcheck: "true"
   name: homelab-manifest
   namespace: argocd
 spec:
