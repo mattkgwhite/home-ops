@@ -12,7 +12,7 @@ spec:
     - git:
         files:
           - path: kubernetes/argo/manifests/*.yaml
-        repoURL: https://github.com/<github>/home-ops.git
+        repoURL: https://github.com/mattkgwhite/home-ops.git
         revision: main
   template:
     metadata:
@@ -24,7 +24,7 @@ spec:
       project: default
       source:
         path: '{{ .path.path }}'
-        repoURL: https://github.com/<github>/home-ops.git
+        repoURL: https://github.com/mattkgwhite/home-ops.git
         targetRevision: HEAD
       syncPolicy:
         automated:
