@@ -1,29 +1,17 @@
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
-  timezone: 'UTC',
   extends: [
     'config:recommended',
   ],
-  dependencyDashboard: true,
-  customManagers: [
-    {
-      customType: 'regex',
-      managerFilePatterns: [
-        '/kustomization.ya??ml$/',
-      ],
-      matchStrings: [
-        'datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\n*[^/]+://[^/]+/[^/]+/[^/]+/(?<currentValue>[^/]+)/',
-      ],
-    },
-    {
-      customType: 'regex',
-      managerFilePatterns: [
-        '/env.sh/',
-      ],
-      datasourceTemplate: 'helm',
-      matchStrings: [
-        'HELM_REPO_SOURCE="(?<registryUrl>[^"]+)"\n*[^"]+"(?<depName>[^"]+)"\n*[^"]+"(?<currentValue>[^"]+)',
-      ],
-    },
-  ],
+  prHourlyLimit: 3,
+  argocd: {
+    managerFilePatterns: [
+      '/kubernetes/[^/]+/manifest\\.yaml$/',
+    ],
+  },
+  kubernetes: {
+    managerFilePatterns: [
+      '/kubernetes/[^/]+/manifest\\.yaml$/',
+    ],
+  },
 }
