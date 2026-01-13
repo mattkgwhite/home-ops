@@ -1,19 +1,20 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":dependencyDashboardApproval"],
   "timezone": "UTC",
-  "extends": [
-    "config:recommended", ":dependencyDashboardApproval"
-  ],
   "dependencyDashboard": true,
 
-  "kubernetes": {
-    "managerFilePatterns": [
-      "^kubernetes/argo/manifests/.*\\.yaml$"
+  "argocd": {
+    "enabled": true,
+    "fileMatch": [
+      "kubernetes/argo/manifests/.*\\.ya?ml$"
     ]
   },
-  "argocd": {
-    "managerFilePatterns": [
-      "^kubernetes/argo/manifests/.*\\.yaml$"
+
+  "kubernetes": {
+    "enabled": true,
+    "fileMatch": [
+      "kubernetes/argo/manifests/.*\\.ya?ml$"
     ]
   }
 }
