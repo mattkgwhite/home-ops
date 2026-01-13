@@ -25,15 +25,5 @@
         'HELM_REPO_SOURCE="(?<registryUrl>[^"]+)"\n*[^"]+"(?<depName>[^"]+)"\n*[^"]+"(?<currentValue>[^"]+)',
       ],
     },
-      argocd: {
-      managerFilePatterns: [
-        '/kubernetes/[^/]+/manifest\\.yaml$/',
-      ],
-    },
-     kubernetes: {
-      managerFilePatterns: [
-        '/kubernetes/[^/]+/manifest\\.yaml$/',
-      ],
-    },
   ],
 }
