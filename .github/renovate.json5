@@ -2,20 +2,19 @@
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: [
     'config:recommended',
-    ':dependencyDashboardApproval',
   ],
   timezone: 'UTC',
   dependencyDashboard: true,
   argocd: {
     enabled: true,
     managerFilePatterns: [
-      '/kubernetes/argo/manifests/.*\\.ya?ml$/',
+      '/kubernetes/argo/manifests/.+\\.ya?ml$/',
     ],
   },
   kubernetes: {
     enabled: true,
     managerFilePatterns: [
-      '/kubernetes/argo/manifests/.*\\.ya?ml$/',
+      '/kubernetes/argo/manifests/.+\\.ya?ml$/',
     ],
   },
 }
