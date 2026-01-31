@@ -12,13 +12,14 @@ spec:
   destination:
     namespace: envoy-gateway
     server: https://kubernetes.default.svc
-  project: homelab
+  project: default
   source:
     chart: gateway-helm
     repoURL: mirror.gcr.io/envoyproxy
     targetRevision: v1.6.2
     helm:
       valuesObject:
+        installCRDs: true
         global:
           imageRegistry: mirror.gcr.io
         config:
