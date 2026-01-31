@@ -84,6 +84,14 @@ For cert-manager go onto the official release version and copy the link to the c
 kubectl apply -f <cert-manager.crds.yaml from releases>
 ```
 
+Envoy-Gateway:
+
+Install the below example to test to make sure that everything works, once done delete the configuration. *Note: This will fix a possible issue with the httproute CRD being missing*
+
+```shell
+kubectl apply -f https://raw.githubusercontent.com/envoyproxy/gateway/latest/examples/kubernetes/http-routing.yaml
+```
+
 ### Base Configuration
 
 ```shell
