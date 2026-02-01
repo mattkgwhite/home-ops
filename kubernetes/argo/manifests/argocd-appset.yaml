@@ -16,10 +16,10 @@ spec:
   goTemplate: true
   template:
     metadata:
-      name: '{{ .path.basename }}'
+      name: '{{ .path.filenameNormalized }}'
     spec:
       destination:
-        namespace: '{{ .path.basename }}'
+        namespace: '{{ .path.filenameNormalized }}'
         server: https://kubernetes.default.svc
       project: default
       source:
