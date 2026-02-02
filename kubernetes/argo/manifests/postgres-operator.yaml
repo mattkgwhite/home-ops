@@ -47,8 +47,11 @@
 #       valuesObject:
 #         envs:
 #           targetNamespace: "*"
-#   syncPolicy:
-#     automated:
-#       allowEmpty: true
-#       prune: true
-#       selfHeal: true
+  # syncPolicy:
+  #   automated:
+  #     allowEmpty: true
+  #     prune: true
+  #     selfHeal: true
+  #   syncOptions:
+  #   - serversideApply=true
+  #   - force-conflicts=true

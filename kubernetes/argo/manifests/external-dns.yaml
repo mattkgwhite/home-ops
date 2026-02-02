@@ -61,3 +61,6 @@ spec:
       allowEmpty: true
       prune: true
       selfHeal: true
+    syncOptions:
+    - serversideApply=true
+    - force-conflicts=true

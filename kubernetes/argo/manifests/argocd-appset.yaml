@@ -31,5 +31,9 @@ spec:
           allowEmpty: true
           prune: true
           selfHeal: true
+          serversideApply: true
         syncOptions:
           - CreateNamespace=true
+          - serversideApply=true
+          - force-conflicts=true
+

@@ -31,13 +31,13 @@ spec:
                   # https://gateway.envoyproxy.io/docs/api/extension_types/#kubernetesdeploymodetype
                   type: GatewayNamespace
   syncPolicy:
-    syncOptions:
-    - CreateNamespace=true
-    - ServerSideApply=true
     automated:
       allowEmpty: true
       prune: true
       selfHeal: true
+    syncOptions:
+    - serversideApply=true
+    - force-conflicts=true
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass

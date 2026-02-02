@@ -29,6 +29,9 @@ spec:
       allowEmpty: true
       prune: true
       selfHeal: true
+    syncOptions:
+    - serversideApply=true
+    - force-conflicts=true
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
