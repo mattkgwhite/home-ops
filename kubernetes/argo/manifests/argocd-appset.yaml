@@ -16,14 +16,14 @@ spec:
   goTemplate: true
   template:
     metadata:
-      name: '{{.path.basename}}.manifest'
+      name: '{{ .path.filenameNormalized }}-{{ .path.basename }}' # longer application names '{{ .path.path | replace "/" "-" | trimSuffix ".yaml" }}'
     spec:
       destination:
         namespace: '{{.path.basename}}'
         server: https://kubernetes.default.svc
       project: default
       source:
-        path: '{{ .path.path }}'
+        path: '{{.path.path}}'
         repoURL: https://github.com/mattkgwhite/home-ops.git
         targetRevision: HEAD
       syncPolicy:
