@@ -1,12 +1,12 @@
-# apiVersion: v1
-# kind: Namespace
-# metadata:
-#   name: workflows
-# ---
-# apiVersion: v1
-# kind: Namespace
-# metadata:
-#   name: workflows
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: workflows
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: workflows
 # ---
 # apiVersion: external-secrets.io/v1beta1
 # kind: ExternalSecret
@@ -27,200 +27,174 @@
 #       remoteRef:
 #         key: sso
 #         property: workflows
-# ---
-# apiVersion: cert-manager.io/v1
-# kind: Certificate
-# metadata:
-#   name: workflow-cert
-#   namespace: certificate
-# spec:
-#   commonName: workflow.nahops.co.uk
-#   secretName: workflow-cert
-#   dnsNames:
-#     - workflow.nahops.co.uk
-#   issuerRef:
-#     name: letsencrypt-production
-#     kind: ClusterIssuer
-# ---
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: workflows-extname
-#   annotations:
-#     external-dns.alpha.kubernetes.io/hostname: workflows.<path:stringreplacesecret#domain>
-#     external-dns.alpha.kubernetes.io/ttl: "300"
-# spec:
-#   type: ExternalName
-#   externalName: nginx.<path:stringreplacesecret#domain>
-#   sessionAffinity: None
-# ---
-# apiVersion: argoproj.io/v1alpha1
-# kind: Application
-# metadata:
-#   name: argo-workflows
-#   namespace: argocd
-# spec:
-#   destination:
-#     namespace: argo-workflows
-#     server: https://kubernetes.default.svc
-#   project: default
-#   source:
-#     chart: argo-workflows
-#     repoURL: https://argoproj.github.io/argo-helm
-#     targetRevision: 0.45.27
-#     helm:
-#       values: |
-#         fullnameOverride: argo-workflows
-#         crds:
-#           install: true
-#           keep: true
-#         workflow:
-#           rbac:
-#             create: true
-#           serviceAccount:
-#             create: true
-#         controller:
-#           workflowNamespaces:
-#             - default
-#             - workflows
-#         server:
-#           enabled: true
-#           ingress:
-#             enabled: false
-#           rbac:
-#             create: true
-#           serviceAccount: 
-#             annotations:
-#               workflows.argoproj.io/rbac-rule: "'hacksmhosting:admins' in groups"
-#               workflows.argoproj.io/rbac-rule-procedure: "1"
-#               workflows.argoproj.io/service-account-token.name: admin-user.service-account-token
-#           extraArgs:
-#           - --secure=true
-#           - --auth-mode=local
-#           # sso:
-#           #   enabled: true
-#           #   issuer: "https://authentik.<path:stringreplacesecret#domain>/application/o/workflows/"
-#           #   redirectUrl: "http://workflows.<path:stringreplacesecret#domain>/login/generic_oauth"
-#           #   userInfoPath: /application/o/userinfo/
-#           #   sessionExpiry: 240h
-#           #   scopes:
-#           #   - email
-#           #   userInfoGroupsField: memberof
-#           #   rbac:
-#           #     enabled: true
-#           #   clientId:
-#           #     name: workflows
-#           #   clientSecret: $sso:token
-  # syncPolicy:
-  #   automated:
-  #     allowEmpty: true
-  #     prune: true
-  #     selfHeal: true
-  #   syncOptions:
-  #   - serversideApply=true
-  #   - force-conflicts=true
-# ---
-# apiVersion: gateway.networking.k8s.io/v1
-# kind: HTTPRoute
-# metadata:
-#   name: workflows
-#   namespace: argo-workflows
-# spec:
-#   parentRefs:
-#     - name: internal
-#       namespace: gateway
-#       sectionName: https
-#   hostnames:
-#     - "workflow.nahops.co.uk"
-#   rules:
-#     - backendRefs:
-#         - name: argocd-server
-#           port: 2746
-# ---
-# apiVersion: rbac.authorization.k8s.io/v1
-# kind: ClusterRole
-# metadata:
-#   name: hacksmhosting-admins
-# rules:
-# - verbs: [get, watch, list]
-#   apiGroups: [""]
-#   resources: [configmaps, events]
-# - verbs: [get, watch, list, delete]
-#   apiGroups: [""]
-#   resources: [pods]
-# - verbs: [get, list]
-#   apiGroups: [""]
-#   resources: [pods/log]
-# - verbs: [get, create]
-#   apiGroups: [""]
-#   resources: [secrets]
-#   resourceNames: [sso]
-# - verbs: [get, list, watch]
-#   apiGroups: [""]
-#   resources: [serviceaccounts]
-# - verbs: [create, watch, patch]
-#   apiGroups: [""]
-#   resources: [events]
-# - verbs: [create, get, list, watch, update, patch, delete]
-#   apiGroups: [argoproj.io]
-#   resources:
-#   - cronworkflows
-#   - eventbus
-#   - eventsources
-#   - sensors
-#   - workfloweventbindings
-#   - workflows
-#   - workflowtaskresults
-#   - workflowtasksets
-#   - workflowtemplates
-#   - clusterworkflowtemplates
-# ---
-# apiVersion: rbac.authorization.k8s.io/v1
-# kind: ClusterRoleBinding
-# metadata:
-#   name: hacksmhosting-admins
-# subjects:
-# - kind: ServiceAccount
-#   name: admin-user
-#   namespace: argo-workflows
-# roleRef:
-#   apiGroup: rbac.authorization.k8s.io
-#   kind: ClusterRole
-#   name: hacksmhosting-admins
-# ---
-# apiVersion: v1
-# kind: ServiceAccount
-# metadata:
-#   name: admin-user
-#   namespace: argo-workflows
-#   annotations:
-#     workflows.argoproj.io/rbac-rule: "'hacksmhosting:admins' in groups"
-#     workflows.argoproj.io/rbac-rule-precedence: "1"
-#     workflows.argoproj.io/service-account-token.name: admin-user.service-account-token
-# ---
-# apiVersion: external-secrets.io/v1alpha1
-# kind: PushSecret
-# metadata:
-#   name: workflow-production
-#   namespace: certificate
-#   annotations:
-#     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-# spec:
-#   refreshInterval: "5m"
-#   secretStoreRefs:
-#     - name: 1password
-#       kind: ClusterSecretStore
-#   selector:
-#     secret:
-#       name: workflow-production
-#   data:
-#     - match:
-#         secretKey: tls.crt
-#         remoteRef:
-#           remoteKey: certificate.wildcard-production
-#           property: tls.crt
-#     - match:
-#         secretKey: tls.key
-#         remoteRef:
-#           remoteKey: certificate.wildcard-production
-#           property: tls.key
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argo-workflows
+  namespace: argocd
+spec:
+  destination:
+    namespace: argo-workflows
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: argo-workflows
+    repoURL: https://argoproj.github.io/argo-helm
+    targetRevision: 0.45.27
+    helm:
+      values: |
+        fullnameOverride: argo-workflows
+        crds:
+          install: true
+          keep: true
+        workflow:
+          rbac:
+            create: true
+          serviceAccount:
+            create: true
+        controller:
+          workflowNamespaces:
+            - default
+            - workflows
+        server:
+          enabled: true
+          ingress:
+            enabled: false
+          rbac:
+            create: true
+          serviceAccount: 
+            annotations:
+              workflows.argoproj.io/rbac-rule: "'hacksmhosting:admins' in groups"
+              workflows.argoproj.io/rbac-rule-procedure: "1"
+              workflows.argoproj.io/service-account-token.name: admin-user.service-account-token
+          extraArgs:
+          - --secure=true
+          - --auth-mode=local
+          # sso:
+          #   enabled: true
+          #   issuer: "https://authentik.<path:stringreplacesecret#domain>/application/o/workflows/"
+          #   redirectUrl: "http://workflows.<path:stringreplacesecret#domain>/login/generic_oauth"
+          #   userInfoPath: /application/o/userinfo/
+          #   sessionExpiry: 240h
+          #   scopes:
+          #   - email
+          #   userInfoGroupsField: memberof
+          #   rbac:
+          #     enabled: true
+          #   clientId:
+          #     name: workflows
+          #   clientSecret: $sso:token
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - serversideApply=true
+    - force-conflicts=true
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: workflows
+  namespace: argo-workflows
+spec:
+  parentRefs:
+    - name: internal
+      namespace: gateway
+      sectionName: https
+  hostnames:
+    - "workflow.nahops.co.uk"
+  rules:
+    - backendRefs:
+        - name: argocd-server
+          port: 2746
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: hacksmhosting-admins
+rules:
+- verbs: [get, watch, list]
+  apiGroups: [""]
+  resources: [configmaps, events]
+- verbs: [get, watch, list, delete]
+  apiGroups: [""]
+  resources: [pods]
+- verbs: [get, list]
+  apiGroups: [""]
+  resources: [pods/log]
+- verbs: [get, create]
+  apiGroups: [""]
+  resources: [secrets]
+  resourceNames: [sso]
+- verbs: [get, list, watch]
+  apiGroups: [""]
+  resources: [serviceaccounts]
+- verbs: [create, watch, patch]
+  apiGroups: [""]
+  resources: [events]
+- verbs: [create, get, list, watch, update, patch, delete]
+  apiGroups: [argoproj.io]
+  resources:
+  - cronworkflows
+  - eventbus
+  - eventsources
+  - sensors
+  - workfloweventbindings
+  - workflows
+  - workflowtaskresults
+  - workflowtasksets
+  - workflowtemplates
+  - clusterworkflowtemplates
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: hacksmhosting-admins
+subjects:
+- kind: ServiceAccount
+  name: admin-user
+  namespace: argo-workflows
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: hacksmhosting-admins
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin-user
+  namespace: argo-workflows
+  annotations:
+    workflows.argoproj.io/rbac-rule: "'hacksmhosting:admins' in groups"
+    workflows.argoproj.io/rbac-rule-precedence: "1"
+    workflows.argoproj.io/service-account-token.name: admin-user.service-account-token
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: workflow-production
+  namespace: certificate
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: "5m"
+  secretStoreRefs:
+    - name: 1password
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: workflow-production
+  data:
+    - match:
+        secretKey: tls.crt
+        remoteRef:
+          remoteKey: certificate.wildcard-production
+          property: tls.crt
+    - match:
+        secretKey: tls.key
+        remoteRef:
+          remoteKey: certificate.wildcard-production
+          property: tls.key
