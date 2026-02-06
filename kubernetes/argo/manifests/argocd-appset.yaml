@@ -3,7 +3,6 @@ kind: ApplicationSet
 metadata:
   labels:
     argocd.argoproj.io/instance: manifests
-    # argocd.argoproj.io/ignore-healthcheck: "true"
   name: homelab-manifest
   namespace: argocd
 spec:
@@ -16,24 +15,22 @@ spec:
   goTemplate: true
   template:
     metadata:
-      name: '{{ .path.filenameNormalized }}-{{ .path.basename }}' # longer application names '{{ .path.path | replace "/" "-" | trimSuffix ".yaml" }}'
+      name: '{{.path.basename}}.manifest'
     spec:
-      destination:
-        namespace: '{{.path.basename}}'
-        server: https://kubernetes.default.svc
       project: default
       source:
-        path: '{{.path.path}}'
         repoURL: https://github.com/mattkgwhite/home-ops.git
+        path: '{{ .path.path }}'
         targetRevision: HEAD
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{.path.basename}}'
       syncPolicy:
-        automated:
-          allowEmpty: true
-          prune: true
-          selfHeal: true
-          # serversideApply: true
         syncOptions:
           - CreateNamespace=true
           - serversideApply=true
           - force-conflicts=true
-
+        automated:
+          allowEmpty: true
+          prune: true
+          selfHeal: true
