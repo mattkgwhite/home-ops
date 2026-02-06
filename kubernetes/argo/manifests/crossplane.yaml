@@ -23,9 +23,9 @@ spec:
       allowEmpty: true
       prune: true
       selfHeal: true
-    syncOptions:
-    - serversideApply=true
-    - force-conflicts=true
+    # syncOptions:
+    # - serversideApply=true
+    # - force-conflicts=true
 ---
 apiVersion: pkg.crossplane.io/v1beta1
 kind: DeploymentRuntimeConfig

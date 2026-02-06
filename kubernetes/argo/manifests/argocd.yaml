@@ -82,9 +82,9 @@ spec:
       allowEmpty: true
       prune: true
       selfHeal: true
-    syncOptions:
-    - serversideApply=true
-    - force-conflicts=true
+    # syncOptions:
+    # - serversideApply=true
+    # - force-conflicts=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
