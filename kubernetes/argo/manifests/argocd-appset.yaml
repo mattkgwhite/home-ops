@@ -28,8 +28,6 @@ spec:
       syncPolicy:
         syncOptions:
           - CreateNamespace=true
-          # - serversideApply=true
-          # - force-conflicts=true
         automated:
           allowEmpty: true
           prune: true
