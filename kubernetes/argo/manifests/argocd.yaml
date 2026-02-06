@@ -167,3 +167,38 @@ spec:
 #   url:  https://github.com/xxxxxxxx/argocd-homelab.git
 #   username: xxxxxxxx
 #   type: git
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  labels:
+    argocd.argoproj.io/instance: manifests
+  name: homelab-manifest
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        files:
+          - path: kubernetes/argo/manifests/*.yaml
+        repoURL: https://github.com/mattkgwhite/home-ops.git
+        revision: main
+  goTemplate: true
+  template:
+    metadata:
+      name: '{{.path.basename}}.manifest'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/mattkgwhite/home-ops.git
+        path: '{{ .path.path }}'
+        targetRevision: HEAD
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{.path.basename}}'
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+        automated:
+          allowEmpty: true
+          prune: true
+          selfHeal: true
