@@ -86,10 +86,12 @@ kubectl apply -f <cert-manager.crds.yaml from releases>
 
 Envoy-Gateway:
 
-Install the below example to test to make sure that everything works, once done delete the configuration. *Note: This will fix a possible issue with the httproute CRD being missing*
+Need to run the following in order to install the relevant missing CRDs from the Envoy-Gateway deployment / install.
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/envoyproxy/gateway/latest/examples/kubernetes/http-routing.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_httproutes.yaml --server-side
+kubectl apply -f https://raw.githubusercontent.com/envoyproxy/gateway/refs/heads/main/charts/gateway-helm/crds/generated/gateway.envoyproxy.io_envoyproxies.yaml --server-side --force-conflicts
+kubectl apply -f https://raw.githubusercontent.com/envoyproxy/gateway/refs/heads/main/charts/gateway-helm/crds/gatewayapi-crds.yaml --server-side --force-conflicts
 ```
 
 ### Base Configuration
