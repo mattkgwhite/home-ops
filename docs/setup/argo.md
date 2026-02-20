@@ -50,7 +50,51 @@ kubectl create secret generic 1passwordconnect --namespace external-secrets --fr
 
 ## Installation
 
-### Base Configuration & Requirements
+## Requirements
+
+The following installs the required CRDs for services that are on the cluster.
+
+Cilium:
+
+```shell
+kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumbgppeeringpolicies.yaml \
+  -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumendpointslices.yaml \
+  -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumgatewayclassconfigs.yaml \
+  -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliuml2announcementpolicies.yaml \
+  -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumpodippools.yaml \
+  -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumloadbalancerippools.yaml
+```
+
+Gateway-Api:
+
+```shell
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml \
+  -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/standard/gateway.networking.k8s.io_gateways.yaml \
+  -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml \
+  -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml \
+  -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml \
+  -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.2.0/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml
+```
+
+Cert-Manager: 
+
+For cert-manager go onto the official release version and copy the link to the cert-manager.crds.yaml file and then apply that file.
+
+```shell
+kubectl apply -f <cert-manager.crds.yaml from releases>
+```
+
+Envoy-Gateway:
+
+Need to run the following in order to install the relevant missing CRDs from the Envoy-Gateway deployment / install.
+
+```shell
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_httproutes.yaml --server-side
+kubectl apply -f https://raw.githubusercontent.com/envoyproxy/gateway/refs/heads/main/charts/gateway-helm/crds/generated/gateway.envoyproxy.io_envoyproxies.yaml --server-side --force-conflicts
+kubectl apply -f https://raw.githubusercontent.com/envoyproxy/gateway/refs/heads/main/charts/gateway-helm/crds/gatewayapi-crds.yaml --server-side --force-conflicts
+```
+
+### Base Configuration
 
 ```shell
 export SETUP_NODEIP=192.168.1.60
@@ -102,7 +146,7 @@ kubectl label nodes mynodename kubernetes.io/role=worker
 ## https://developer.1password.com/docs/cli/get-started
 # login via `eval $(op signin)`
 
-export domain="$(op read op://homelab/stringreplacesecret/domain)"
+export domain="$(op read op://homelab/stringreplacesecret/domain)" / Powershell example "$env:DOMAIN = & op read "op://homelab/stringreplacesecret/domain" "
 # export cloudflaretunnelid="$(op read op://homelab/stringreplacesecret/cloudflaretunnelid)"
 export onepasswordconnect_json="$(op read op://homelab/1Password/1password-credentials.json | base64)"
 export externalsecrets_token="$(op read op://homelab/1Password/token)"
@@ -147,3 +191,7 @@ echo "$argocd_config" | kubectl apply --filename -
 - [External Secret](https://github.com/external-secrets/external-secrets/tree/main/config/crds/bases)
 
 - Cert-Manager - These are contained within the `release` on Github, for example [v1.17.1](https://github.com/cert-manager/cert-manager/releases/tag/v1.17.1) has a file within assets called `cert-manager.crds.yaml`. This can just be applied using `k apply -f <copy-link-address>`
+
+### Utils
+
+- CSI Driver - `sudo apt install cifs-utils`

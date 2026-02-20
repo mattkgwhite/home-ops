@@ -3,7 +3,7 @@ kind: Namespace
 apiVersion: v1
 metadata:
   name: kube-system
----
+# ---
 # apiVersion: argoproj.io/v1alpha1
 # kind: Application
 # metadata:
@@ -54,7 +54,7 @@ spec:
   source:
     chart: cilium
     repoURL: https://helm.cilium.io/
-    targetRevision: 1.17.2
+    targetRevision: 1.19.1
     helm:
       valuesObject:
         autoDirectNodeRoutes: true
@@ -124,6 +124,9 @@ spec:
       allowEmpty: true
       prune: true
       selfHeal: true
+    # syncOptions:
+    # - serversideApply=true
+    # - force-conflicts=true
   ignoreDifferences:
     - group: core
       kind: ConfigMap
@@ -164,7 +167,7 @@ spec:
   source:
     chart: coredns
     repoURL: https://coredns.github.io/helm
-    targetRevision: 1.39.2
+    targetRevision: 1.45.2
     helm:
       valuesObject:
         fullnameOverride: coredns

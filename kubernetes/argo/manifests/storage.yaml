@@ -1,0 +1,128 @@
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: samba
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: csi-smb
+  namespace: argocd
+spec:
+  destination:
+    namespace: kube-system
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: csi-driver-smb
+    repoURL: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-smb/master/charts
+    targetRevision: 1.20.0
+    helm:
+      valuesObject:
+        controller:
+          name: csi-smb-controller
+          replicas: 1
+          metricsPort: 29644
+          livenessProbe:
+            healthPort: 29642
+          logLevel: 5
+          workingMountDir: "/tmp"
+          resources:
+            csiProvisioner:
+              limits:
+                memory: 300Mi
+              requests:
+                cpu: 10m
+                memory: 20Mi
+            livenessProbe:
+              limits:
+                memory: 100Mi
+              requests:
+                cpu: 10m
+                memory: 20Mi
+            smb:
+              limits:
+                memory: 200Mi
+              requests:
+                cpu: 10m
+                memory: 20Mi
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    # syncOptions:
+    # - serversideApply=true
+    # - force-conflicts=true
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: hetzner-storagebox
+provisioner: smb.csi.k8s.io
+parameters:
+  # On Windows, "*.default.svc.cluster.local" could not be recognized by csi-proxy
+  source: "//u457602.your-storagebox.de/backup"
+  # if csi.storage.k8s.io/provisioner-secret is provided, will create a sub directory
+  # with PV name under source
+  # csi.storage.k8s.io/provisioner-secret-name: "smbcreds"
+  # csi.storage.k8s.io/provisioner-secret-namespace: "default"
+  csi.storage.k8s.io/node-stage-secret-name: "hetzner-storagebox"
+  csi.storage.k8s.io/node-stage-secret-namespace: "samba"
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+mountOptions:
+  - dir_mode=0777
+  - file_mode=0777
+  - uid=1001
+  - gid=1001
+  - noperm
+  - mfsymlinks
+  - cache=strict
+  - noserverino  # required to prevent data corruption
+# ---
+# # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/external-secrets.io/externalsecret_v1beta1.json
+# apiVersion: external-secrets.io/v1beta1
+# kind: ExternalSecret
+# metadata:
+#   name: hetzner-storagebox
+# spec:
+#   secretStoreRef:
+#     kind: ClusterSecretStore
+#     name: onepassword-connect
+#   target:
+#     name: hetzner-storagebox-secret
+#     template:
+#       engineVersion: v2
+#       data:
+#         # App
+#         username: '{{ .username }}'
+#         password: '{{ .password }}'
+#   dataFrom:
+#     - extract:
+#         key: hetzner-storagebox
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: hetzner-storagebox
+  namespace: samba
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: "5m"
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: 1password
+  target:
+    creationPolicy: Owner
+  data:
+    - secretKey: username
+      remoteRef:
+        key: hetzner-storagebox
+        property: username
+    - secretKey: password
+      remoteRef:
+        key: hetzner-storagebox
+        property: password

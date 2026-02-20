@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argo-events
+# ---
+# apiVersion: external-secrets.io/v1beta1
+# kind: ExternalSecret
+# metadata:
+#   name: sso
+#   namespace: argo-events
+#   labels:
+#     app.kubernetes.io/part-of: argocd
+# spec:
+#   refreshInterval: "5m"
+#   secretStoreRef:
+#     kind: ClusterSecretStore
+#     name: 1password
+#   target:
+#     creationPolicy: Owner
+#   data:
+#     - secretKey: token
+#       remoteRef:
+#         key: sso
+#         property: events
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argo-events
+  namespace: argocd
+spec:
+  destination:
+    namespace: argo-events
+    server: https://kubernetes.default.svc
+  project: homelab
+  source:
+    chart: argo-events
+    repoURL: https://argoproj.github.io/argo-helm
+    targetRevision: 2.4.20
+    helm:
+      values: |
+        crds:
+          install: false
+        global:
+          image: 
+            repository: quay.io/argoproj/argo-events
+            tag: ""
+            imagePullPolicy: IfNotPresent
+        configs:
+        controller:
+          name: events-controller
+          rbac:
+            enabled: true
+            namespaced: false # when set to true restricts controller to operate in a single namespace, instead of cluster-wide scope.
+            managedNamespace: "" # additional namespace to be monitored by the controller
+          replicas: 1
+        webhook:
+          enabled: false
+          name: events-webhook
+
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    # syncOptions:
+    # - serversideApply=true
+    # - force-conflicts=true
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: argocd
+  namespace: argocd
+spec:
+  parentRefs:
+    - name: internal
+      namespace: gateway
+      sectionName: https
+  hostnames:
+    - "events.nahops.co.uk"
+  rules:
+    - backendRefs:
+        - name: argocd-server
+          port: 443
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: argocd-private
+  namespace: argocd
+  annotations:
+    external-dns.custom/type: private
+spec:
+  endpoints:
+    - dnsName: events.nahops.co.uk
+      recordType: CNAME
+      targets:
+        - intgw.nahops.co.uk

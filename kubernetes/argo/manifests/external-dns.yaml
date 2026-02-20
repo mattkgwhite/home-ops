@@ -3,7 +3,7 @@ apiVersion: v1
 metadata:
   name: external-dns
 ---
-apiVersion: external-secrets.io/v1beta1
+apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
   name: cf-dns
@@ -36,7 +36,7 @@ spec:
   source:
     chart: external-dns
     repoURL: https://kubernetes-sigs.github.io/external-dns/
-    targetRevision: 1.15.2
+    targetRevision: 1.20.0
     helm:
       valuesObject:
         provider:
@@ -61,3 +61,6 @@ spec:
       allowEmpty: true
       prune: true
       selfHeal: true
+    # syncOptions:
+    # - serversideApply=true
+    # - force-conflicts=true

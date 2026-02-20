@@ -1,0 +1,71 @@
+---
+fullnameOverride: coredns
+image:
+  repository: mirror.gcr.io/coredns/coredns
+replicaCount: 2
+k8sAppLabelOverride: kube-dns
+serviceAccount:
+  create: true
+service:
+  name: kube-dns
+  clusterIP: 10.43.0.10
+servers:
+  - zones:
+      - zone: .
+        scheme: dns://
+        use_tcp: true
+    port: 53
+    plugins:
+      - name: log
+      - name: errors
+      - name: health
+        configBlock: |-
+          lameduck 5s
+      - name: ready
+      - name: kubernetes
+        parameters: cluster.local in-addr.arpa ip6.arpa
+        configBlock: |-
+          pods insecure
+          fallthrough in-addr.arpa ip6.arpa
+          ttl 30
+      - name: prometheus
+        parameters: 0.0.0.0:9153
+      - name: forward
+        parameters: . /etc/resolv.conf 8.8.8.8 8.8.4.4 #/run/systemd/resolve/resolv.conf
+      - name: cache
+        parameters: 30
+      - name: loop
+      - name: reload
+      - name: loadbalance
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+extraVolumes: 
+  - name: resolv-conf
+    hostPath:
+      path: /run/systemd/resolve/resolv.conf
+      type: File
+extraVolumeMounts:
+  - name: resolv-conf
+    mountPath: /run/systemd/resolve/resolv.conf
+    readOnly: true
+tolerations:
+  - key: CriticalAddonsOnly
+    operator: Exists
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/master
+    operator: Exists
+    effect: NoSchedule
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/instance: coredns

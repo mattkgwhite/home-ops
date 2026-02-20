@@ -1,0 +1,72 @@
+
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: vps-01-credentials
+  namespace: argocd
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: onepassword          # or your Vault/SecretStore name
+    kind: ClusterSecretStore
+  target:
+    name: vps-01-credentials   # the Secret Argo CD will read from
+    creationPolicy: Owner
+  data:
+    - secretKey: server
+      remoteRef:
+        key: vps-01-kubeconfig # entry in 1Password/Vault
+        property: server       # field inside that entry
+    - secretKey: token
+      remoteRef:
+        key: vps-01-kubeconfig
+        property: token
+    - secretKey: caData
+      remoteRef:
+        key: vps-01-kubeconfig
+        property: caData
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Cluster
+metadata:
+  name: vps-01
+  namespace: argocd
+  labels:
+    environment: test
+spec:
+  server: https://dummy-placeholder   # will be overridden by config.secretName
+  name: vps-01
+  config:
+    secretName: vps-01-credentials
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: example-multi-cluster-app
+  namespace: argocd
+spec:
+  generators:
+    - clusters:
+        selector:
+          matchLabels:
+            environment: test
+  template:
+    metadata:
+      name: '{{name}}-example-app'
+    spec:
+      project: default
+      source:
+        repoURL: 'https://github.com/your-org/your-repo.git'
+        targetRevision: main
+        path: k8s/apps/example
+      destination:
+        server: '{{server}}'
+        namespace: example
+      syncPolicy:
+        automated:
+          allowEmpty: true
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - serversideApply=true
+        - force-conflicts=true

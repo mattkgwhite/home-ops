@@ -1,0 +1,92 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: envoy-gateway
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: envoy-gateway
+  namespace: argocd
+spec:
+  destination:
+    namespace: envoy-gateway
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: gateway-helm
+    repoURL: mirror.gcr.io/envoyproxy
+    targetRevision: v1.7.0
+    helm:
+      valuesObject:
+        installCRDs: true
+        global:
+          imageRegistry: mirror.gcr.io
+        config:
+          envoyGateway:
+            provider:
+              type: Kubernetes
+              kubernetes:
+                deploy:
+                  # https://gateway.envoyproxy.io/docs/api/extension_types/#kubernetesdeploymodetype
+                  type: GatewayNamespace
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    # syncOptions:
+    # - serversideApply=true
+    # - force-conflicts=true
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoygateway-argo
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: argo
+    namespace: envoy-gateway
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: argo
+  namespace: envoy-gateway
+spec:
+  logging:
+    level:
+      default: info
+  shutdown:
+    drainTimeout: 180s
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        externalTrafficPolicy: Local
+  # telemetry:
+  #   accessLog:
+  #     settings:
+  #       - format:
+  #           type: Text
+  #           text: |
+  #             [%START_TIME%] "%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%" %RESPONSE_CODE% %RESPONSE_FLAGS% %BYTES_RECEIVED% %BYTES_SENT% %DURATION% "%REQ(X-FORWARDED-FOR)%" "%REQ(USER-AGENT)%" "%REQ(X-REQUEST-ID)%" "%REQ(:AUTHORITY)%" "%UPSTREAM_HOST%"
+  #         sinks:
+  #           - type: OpenTelemetry
+  #             openTelemetry:
+  #               host: argo-collector.observability.svc.cluster.local
+  #               port: 4317
+  #               resources:
+  #                 k8s.cluster.name: ""
+  #   tracing:
+  #     # sample 100% of requests
+  #     samplingRate: 100
+  #     provider:
+  #       backendRefs:
+  #       - name: argo-collector
+  #         namespace: observability
+  #         port: 4317
+  #       type: OpenTelemetry
