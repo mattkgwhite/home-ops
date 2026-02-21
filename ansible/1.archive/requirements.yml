@@ -15,7 +15,7 @@ collections:
   - name: awx.awx
     version: 24.6.1
   - name: kubernetes.core
-    version: 5.4.2
+    version: 6.3.0
   - name: community.sops
     version: 2.2.7
   - name: community.hashi_vault
