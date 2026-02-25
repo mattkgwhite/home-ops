@@ -1,0 +1,24 @@
+all:
+  vars:
+    # ansible_user: automation
+    ansible_ssh_private_key_file: ~/.ssh/id_ed25519
+    # ansible_become: true
+  children:
+
+    proxmox:
+      hosts:
+        pve1:
+          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/proxmox') }}"
+          ansible_user: root
+    docker:
+      hosts:
+        docker1:
+          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/docker') }}"
+    k3s:
+      hosts:
+        argo:
+          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/argo') }}"
+    discord:
+      hosts:
+        disco:
+          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/disco') }}"
