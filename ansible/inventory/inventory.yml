@@ -22,3 +22,7 @@ all:
       hosts:
         disco:
           ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/disco') }}"
+    automation:
+      hosts:
+        casa:
+          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/casa') }}"

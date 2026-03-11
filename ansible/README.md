@@ -37,3 +37,7 @@ ansible pvenodes -m ping -i inventory/static.yaml --user=ansible --private-key ~
 
 export pve1="$(op read op://homelab/ansible/proxmox)" / Powershell example "$env:DOMAIN = & op read "op://homelab/ansible/proxmox" "
 ```
+
+## Playbooks
+
+For the specifics of using ansible-playbooks - there needs to be some way to list all the playbooks and tasks that are available.
