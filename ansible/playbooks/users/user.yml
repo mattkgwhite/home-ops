@@ -1,67 +1,49 @@
 ---
 - name: Create a user on Ubuntu 24.04 LTS Server
-  hosts: all  # Adjust this to target the correct group or hosts
-  become: yes # Run tasks as sudo
-  vars:
-    username: "newuser"
-    user_password: "{{ 'SuperSecurePassword' | password_hash('sha512') }}"
-    ssh_key: "ssh-rsa AAAAB3Nza...your-public-key-here..."
-  
-  tasks:
-    - name: Ensure the user exists
-      user:
-        name: "{{ username }}"
-        password: "{{ user_password }}"
-        shell: "/bin/bash"
-        home: "/home/{{ username }}"
-        createhome: yes
-        groups: sudo  # Add to sudo group (optional)
-        append: yes
-    
-    - name: Set up SSH key for the user
-      authorized_key:
-        user: "{{ username }}"
-        key: "{{ ssh_key }}"
-        state: present
-        manage_dir: yes
-    
-    - name: Ensure sudo access without password (optional)
-      copy:
-        dest: "/etc/sudoers.d/{{ username }}"
-        content: "{{ username }} ALL=(ALL) NOPASSWD: ALL"
-        mode: "0440"
-      when: username != "root"
+  hosts: all
+  become: yes
 
+  vars_prompt:
+    - name: username
+      prompt: "Enter the username to create"
+      private: no  # no = input is visible when typing
 
+    - name: enable_sudo
+      prompt: "Grant passwordless sudo access? (yes/no)"
+      private: no
+      default: "no"
 
----
-- name: Create a user on Ubuntu 24.04 LTS Server
-  hosts: all  # Adjust this to target the correct group or hosts
-  become: yes # Run tasks as sudo
-  vars_files:
-    - secrets.yml  # Encrypted file storing sensitive data
+    - name: root_ssh_key_path
+      prompt: "Path to SSH key file on remote host"
+      private: no
+      default: "/root/.ssh/authorized_keys"
 
   tasks:
     - name: Ensure the user exists
-      user:
+      ansible.builtin.user:
         name: "{{ username }}"
-        password: "{{ user_password }}"
         shell: "/bin/bash"
         home: "/home/{{ username }}"
-        createhome: yes
-        groups: sudo  # Add to sudo group (optional)
+        create_home: yes
+        groups: sudo
         append: yes
-    
+
+    - name: Read SSH keys from root user
+      ansible.builtin.slurp:
+        src: "{{ root_ssh_key_path }}"
+      register: root_ssh_keys
+
     - name: Set up SSH key for the user
-      authorized_key:
+      ansible.builtin.authorized_key:
         user: "{{ username }}"
-        key: "{{ ssh_key }}"
+        key: "{{ root_ssh_keys['content'] | b64decode }}"
         state: present
         manage_dir: yes
-    
-    - name: Ensure sudo access without password (optional)
-      copy:
+
+    - name: Ensure sudo access without password
+      ansible.builtin.copy:
         dest: "/etc/sudoers.d/{{ username }}"
         content: "{{ username }} ALL=(ALL) NOPASSWD: ALL"
         mode: "0440"
-      when: username != "root"
+      when: enable_sudo | bool and username != "root"
+
