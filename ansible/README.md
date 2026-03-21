@@ -28,6 +28,12 @@ ansible all -i inventory -m ping
 ansible pvenodes -m ping -i inventory/static.yaml --user=ansible --private-key ~/.ssh/<key>
 ```
 
+Running a specific playbook, from within the playbooks directory of where playbook is stored. The command below also limits the target machine to be a specific one as defined in the ansible inventory file.
+
+```shell
+ansible-playbook -i ../../inventory/inventory.yml user.yml --limit viper --user root
+```
+
 ### Secrets
 
 ```Shell
@@ -41,3 +47,5 @@ export pve1="$(op read op://homelab/ansible/proxmox)" / Powershell example "$env
 ## Playbooks
 
 For the specifics of using ansible-playbooks - there needs to be some way to list all the playbooks and tasks that are available.
+
+Below is an example command
