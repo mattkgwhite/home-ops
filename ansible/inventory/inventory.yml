@@ -22,7 +22,15 @@ all:
       hosts:
         disco:
           ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/disco') }}"
-    automation:
+    hetzner:
       hosts:
-        casa:
-          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/casa') }}"
+        viper:
+          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/viper') }}"
+        # vps2:
+        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/vps2') }}"
+        # vps3:
+        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/vps3') }}"
+        # vps4:
+        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/vps4') }}"
+        # vps5:
+        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/vps5') }}"
