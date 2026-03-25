@@ -34,3 +34,13 @@ all:
         #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/vps4') }}"
         # vps5:
         #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/vps5') }}"
+
+    ubuntu:
+      children:
+        docker:
+        k3s:
+        discord:
+        hetzner:
+
+    # fedora:
+      # children:

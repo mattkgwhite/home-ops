@@ -1,8 +1,40 @@
+---
 - name: Update Proxmox nodes
-  hosts: proxmox_hosts
+  hosts: proxmox
+  become: yes
+
+  vars_prompt:
+    - name: perform_upgrade
+      prompt: "Apply updates to Proxmox hosts? (yes/no)"
+      private: no
+      default: "no"
 
   tasks:
-    - name: Update OS
-      become: true
+    - name: Refresh apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Check for available updates
       ansible.builtin.apt:
         upgrade: dist
+        update_cache: no
+      check_mode: yes
+      register: available_updates
+
+    - name: Show update status
+      ansible.builtin.debug:
+        msg: "{{ available_updates.changed | ternary('Updates available', 'System is up to date') }}"
+
+    - name: Apply updates
+      ansible.builtin.apt:
+        upgrade: dist
+        update_cache: no
+      register: updates
+      when: perform_upgrade | bool and available_updates.changed
+
+    - name: Reboot server if updates were applied
+      ansible.builtin.reboot:
+        reboot_timeout: 300
+        msg: "Rebooting after system updates"
+      when: updates is defined and updates.changed

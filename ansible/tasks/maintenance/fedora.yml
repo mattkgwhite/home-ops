@@ -1,15 +1,39 @@
+---
 - name: Update Fedora servers
   hosts: fedora
+  become: yes
+
+  vars_prompt:
+    - name: perform_upgrade
+      prompt: "Apply updates to Fedora hosts? (yes/no)"
+      private: no
+      default: "no"
 
   tasks:
-    - name: Upgrade all packages
-      become: true
+    - name: Refresh dnf cache
+      ansible.builtin.dnf:
+        update_cache: yes
+
+    - name: Check for available updates
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+      check_mode: yes
+      register: available_updates
+
+    - name: Show update status
+      ansible.builtin.debug:
+        msg: "{{ available_updates.changed | ternary('Updates available', 'System is up to date') }}"
+
+    - name: Apply updates
       ansible.builtin.dnf:
         name: "*"
         state: latest
       register: updates
+      when: perform_upgrade | bool and available_updates.changed
 
-    - name: Reboot server
-      become: true
+    - name: Reboot server if updates were applied
       ansible.builtin.reboot:
-      when: updates.changed
+        reboot_timeout: 300
+        msg: "Rebooting after system updates"
+      when: updates is defined and updates.changed

@@ -49,3 +49,19 @@ export pve1="$(op read op://homelab/ansible/proxmox)" / Powershell example "$env
 For the specifics of using ansible-playbooks - there needs to be some way to list all the playbooks and tasks that are available.
 
 Below is an example command
+
+
+## Tasks
+
+```
+# Run against all hosts via main.yml
+ansible-playbook -i Kubernetes/inventory/hosts.yml maintenance/tasks/main.yml
+
+# Run against a specific OS only
+ansible-playbook -i Kubernetes/inventory/hosts.yml maintenance/tasks/ubuntu.yml
+
+# Run against a single host
+ansible-playbook -i Kubernetes/inventory/hosts.yml maintenance/tasks/main.yml --limit vps1
+
+# Just check, never apply (ask for password at execution to become relevant user to check for "updates")
+ansible-playbook -i Kubernetes/inventory/hosts.yml maintenance/tasks/main.yml --check --ask-become-pass

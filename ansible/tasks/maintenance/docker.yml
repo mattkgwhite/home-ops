@@ -1,5 +1,12 @@
+---
 - name: Prune Docker system
   hosts: docker
+
+  vars_prompt:
+    - name: perform_prune
+      prompt: "Perform Docker prune? (yes/no)"
+      private: no
+      default: "no"
 
   tasks:
     - name: Prune everything except containers
@@ -11,3 +18,4 @@
         networks: true
         volumes: true
         builder_cache: true
+      when: perform_prune | bool
