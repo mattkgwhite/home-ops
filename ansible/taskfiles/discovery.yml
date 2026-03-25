@@ -1,0 +1,48 @@
+# =============================================================================
+# taskfiles/discovery.yml
+# List playbooks, roles, collections, tags, hosts, and tasks
+# =============================================================================
+
+version: '3'
+
+tasks:
+
+  list:
+    desc: List all available tasks
+    cmds:
+      - task --list
+
+  playbooks:
+    desc: List all playbooks in the project
+    cmds:
+      - find . -name "*.yml" -o -name "*.yaml" | grep -v -E "(roles|collections|inventory|group_vars|host_vars|\.git)" | sort
+
+  roles:
+    desc: List all local roles in the roles/ directory
+    cmds:
+      - find roles/ -maxdepth 1 -mindepth 1 -type d | sort
+
+  collections:
+    desc: List all installed Ansible collections
+    cmds:
+      - ansible-galaxy collection list
+
+  installed-roles:
+    desc: List all installed Galaxy roles
+    cmds:
+      - ansible-galaxy role list
+
+  tags:
+    desc: List all tags available in the main playbook
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --list-tags
+
+  hosts:
+    desc: List all hosts the playbook would run against
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --list-hosts
+
+  tasks:
+    desc: List all tasks in the main playbook without executing
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --list-tasks

@@ -1,0 +1,78 @@
+# =============================================================================
+# Ansible Taskfile - Main Entry Point
+# https://taskfile.dev
+# =============================================================================
+#
+# Tasks are split into focused files under taskfiles/
+#
+#   taskfiles/discovery.yml  - List playbooks, roles, tags, hosts, tasks
+#   taskfiles/playbooks.yml  - Run, check, and diff playbooks
+#   taskfiles/inventory.yml  - Inventory inspection and graph
+#   taskfiles/vault.yml      - All ansible-vault operations
+#   taskfiles/galaxy.yml     - Role and collection management
+#   taskfiles/adhoc.yml      - Ad-hoc commands, ping, facts, SSH
+#   taskfiles/setup.yml      - Bootstrap, env checks, cleanup, version info
+#
+# =============================================================================
+
+version: '3'
+
+vars:
+  INVENTORY: inventory/hosts.yml
+  PLAYBOOK: site.yml
+  VAULT_FILE: vault/secrets.yml
+  VAULT_PASS_FILE: vault/.vault_pass
+  ANSIBLE_OPTS: ""
+
+env:
+  ANSIBLE_FORCE_COLOR: "1"
+
+includes:
+  discovery:
+    taskfile: taskfiles/discovery.yml
+    vars:
+      INVENTORY: "{{.INVENTORY}}"
+      PLAYBOOK: "{{.PLAYBOOK}}"
+
+  playbooks:
+    taskfile: taskfiles/playbooks.yml
+    vars:
+      INVENTORY: "{{.INVENTORY}}"
+      PLAYBOOK: "{{.PLAYBOOK}}"
+      VAULT_PASS_FILE: "{{.VAULT_PASS_FILE}}"
+      ANSIBLE_OPTS: "{{.ANSIBLE_OPTS}}"
+
+  inventory:
+    taskfile: taskfiles/inventory.yml
+    vars:
+      INVENTORY: "{{.INVENTORY}}"
+
+  vault:
+    taskfile: taskfiles/vault.yml
+    vars:
+      VAULT_FILE: "{{.VAULT_FILE}}"
+      VAULT_PASS_FILE: "{{.VAULT_PASS_FILE}}"
+      INVENTORY: "{{.INVENTORY}}"
+      PLAYBOOK: "{{.PLAYBOOK}}"
+      ANSIBLE_OPTS: "{{.ANSIBLE_OPTS}}"
+
+  galaxy:
+    taskfile: taskfiles/galaxy.yml
+
+  adhoc:
+    taskfile: taskfiles/adhoc.yml
+    vars:
+      INVENTORY: "{{.INVENTORY}}"
+
+  setup:
+    taskfile: taskfiles/setup.yml
+    vars:
+      INVENTORY: "{{.INVENTORY}}"
+      PLAYBOOK: "{{.PLAYBOOK}}"
+      VAULT_PASS_FILE: "{{.VAULT_PASS_FILE}}"
+
+tasks:
+  default:
+    desc: List all available tasks
+    cmds:
+      - task --list

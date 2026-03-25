@@ -1,0 +1,159 @@
+# =============================================================================
+# taskfiles/playbooks.yml
+# Run, check, and diff playbooks across environments
+# =============================================================================
+
+version: '3'
+
+tasks:
+
+  # ── Syntax & Linting ──────────────────────────────────────────────────────
+
+  lint:
+    desc: Lint all playbooks with ansible-lint
+    cmds:
+      - ansible-lint {{.PLAYBOOK}}
+
+  syntax-check:
+    desc: Run a syntax check on the main playbook
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --syntax-check
+
+  # ── Dry Runs ──────────────────────────────────────────────────────────────
+
+  check:
+    desc: Dry-run the main playbook (--check --diff)
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --check --diff {{.ANSIBLE_OPTS}}
+
+  check-tags:
+    desc: "Dry-run with specific tags. Usage: task playbooks:check-tags TAGS=nginx,ssl"
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --check --diff --tags "{{.TAGS}}" {{.ANSIBLE_OPTS}}
+
+  check-limit:
+    desc: "Dry-run against specific hosts. Usage: task playbooks:check-limit LIMIT=webservers"
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --check --diff --limit "{{.LIMIT}}" {{.ANSIBLE_OPTS}}
+
+  diff:
+    desc: Show what would change without applying (--check --diff)
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --check --diff {{.ANSIBLE_OPTS}}
+
+  diff-limit:
+    desc: "Show diff for specific hosts. Usage: task playbooks:diff-limit LIMIT=webservers"
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --check --diff --limit "{{.LIMIT}}" {{.ANSIBLE_OPTS}}
+
+  # ── Run ───────────────────────────────────────────────────────────────────
+
+  run:
+    desc: Run the main playbook
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} {{.ANSIBLE_OPTS}}
+
+  run-tags:
+    desc: "Run playbook with specific tags. Usage: task playbooks:run-tags TAGS=nginx,ssl"
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --tags "{{.TAGS}}" {{.ANSIBLE_OPTS}}
+
+  run-limit:
+    desc: "Run playbook against specific hosts. Usage: task playbooks:run-limit LIMIT=webservers"
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --limit "{{.LIMIT}}" {{.ANSIBLE_OPTS}}
+
+  run-verbose:
+    desc: Run the main playbook with verbose output (-vvv)
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} -vvv {{.ANSIBLE_OPTS}}
+
+  # ── Run with Vault (Password Prompt) ─────────────────────────────────────
+
+  run-ask-vault:
+    desc: Run the main playbook, prompting for vault password at runtime
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --ask-vault-pass {{.ANSIBLE_OPTS}}
+
+  run-tags-ask-vault:
+    desc: "Run with tags, prompting for vault password. Usage: task playbooks:run-tags-ask-vault TAGS=nginx"
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --tags "{{.TAGS}}" --ask-vault-pass {{.ANSIBLE_OPTS}}
+
+  run-limit-ask-vault:
+    desc: "Run against specific hosts, prompting for vault password. Usage: task playbooks:run-limit-ask-vault LIMIT=webservers"
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --limit "{{.LIMIT}}" --ask-vault-pass {{.ANSIBLE_OPTS}}
+
+  check-ask-vault:
+    desc: Dry-run the main playbook, prompting for vault password
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --check --diff --ask-vault-pass {{.ANSIBLE_OPTS}}
+
+  # ── Run with Vault (Password File) ───────────────────────────────────────
+
+  run-vault-file:
+    desc: Run the main playbook using the vault password file
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --vault-password-file {{.VAULT_PASS_FILE}} {{.ANSIBLE_OPTS}}
+
+  run-tags-vault-file:
+    desc: "Run with tags using vault password file. Usage: task playbooks:run-tags-vault-file TAGS=nginx"
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --tags "{{.TAGS}}" --vault-password-file {{.VAULT_PASS_FILE}} {{.ANSIBLE_OPTS}}
+
+  run-limit-vault-file:
+    desc: "Run against specific hosts using vault password file. Usage: task playbooks:run-limit-vault-file LIMIT=webservers"
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --limit "{{.LIMIT}}" --vault-password-file {{.VAULT_PASS_FILE}} {{.ANSIBLE_OPTS}}
+
+  check-vault-file:
+    desc: Dry-run the main playbook using the vault password file
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --check --diff --vault-password-file {{.VAULT_PASS_FILE}} {{.ANSIBLE_OPTS}}
+
+  # ── Run with Multiple Vault IDs ───────────────────────────────────────────
+
+  run-multi-vault:
+    desc: Run playbook with multiple vault IDs (dev + prod), prompts for each password
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --vault-id dev@prompt --vault-id prod@prompt {{.ANSIBLE_OPTS}}
+
+  run-multi-vault-files:
+    desc: Run playbook with multiple vault ID password files (vault/.dev_pass and vault/.prod_pass)
+    cmds:
+      - ansible-playbook -i {{.INVENTORY}} {{.PLAYBOOK}} --vault-id dev@vault/.dev_pass --vault-id prod@vault/.prod_pass {{.ANSIBLE_OPTS}}
+
+  # ── Environment Shortcuts ─────────────────────────────────────────────────
+
+  dev:
+    desc: Run playbook against dev inventory
+    cmds:
+      - ansible-playbook -i inventory/dev.yml {{.PLAYBOOK}} {{.ANSIBLE_OPTS}}
+
+  dev-vault:
+    desc: Run playbook against dev inventory using vault password file
+    cmds:
+      - ansible-playbook -i inventory/dev.yml {{.PLAYBOOK}} --vault-password-file vault/.dev_pass {{.ANSIBLE_OPTS}}
+
+  staging:
+    desc: Run playbook against staging inventory
+    cmds:
+      - ansible-playbook -i inventory/staging.yml {{.PLAYBOOK}} {{.ANSIBLE_OPTS}}
+
+  staging-vault:
+    desc: Run playbook against staging inventory using vault password file
+    cmds:
+      - ansible-playbook -i inventory/staging.yml {{.PLAYBOOK}} --vault-password-file vault/.staging_pass {{.ANSIBLE_OPTS}}
+
+  prod:
+    desc: Run playbook against PRODUCTION inventory (prompts for confirmation)
+    prompt: "You are about to run against PRODUCTION. Are you sure?"
+    cmds:
+      - ansible-playbook -i inventory/prod.yml {{.PLAYBOOK}} {{.ANSIBLE_OPTS}}
+
+  prod-vault:
+    desc: Run playbook against PRODUCTION inventory using vault password file (prompts for confirmation)
+    prompt: "You are about to run against PRODUCTION with vault secrets. Are you sure?"
+    cmds:
+      - ansible-playbook -i inventory/prod.yml {{.PLAYBOOK}} --vault-password-file vault/.prod_pass {{.ANSIBLE_OPTS}}

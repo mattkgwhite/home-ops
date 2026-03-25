@@ -50,18 +50,44 @@ For the specifics of using ansible-playbooks - there needs to be some way to lis
 
 Below is an example command
 
-
 ## Tasks
 
-```
-# Run against all hosts via main.yml
+### Run against all hosts via main.yml
+
+```shell
 ansible-playbook -i Kubernetes/inventory/hosts.yml maintenance/tasks/main.yml
+```
 
-# Run against a specific OS only
+### Run against a specific OS only
+
+```shell
 ansible-playbook -i Kubernetes/inventory/hosts.yml maintenance/tasks/ubuntu.yml
+```
 
-# Run against a single host
+### Run against a single host
+
+```shell
 ansible-playbook -i Kubernetes/inventory/hosts.yml maintenance/tasks/main.yml --limit vps1
+```
 
-# Just check, never apply (ask for password at execution to become relevant user to check for "updates")
+### Just check, never apply (ask for password at execution to become relevant user to check for "updates")
+
+```shell
 ansible-playbook -i Kubernetes/inventory/hosts.yml maintenance/tasks/main.yml --check --ask-become-pass
+```
+
+
+### Structure
+
+```
+your-ansible-project/
+├── Taskfile.yml           ← main entry point (vars + includes only)
+└── taskfiles/
+    ├── discovery.yml      ← list playbooks, roles, tags, hosts, tasks
+    ├── playbooks.yml      ← run, check, diff, lint, env shortcuts
+    ├── inventory.yml      ← list, graph, host vars
+    ├── vault.yml          ← all vault operations
+    ├── galaxy.yml         ← install, update, scaffold roles
+    ├── adhoc.yml          ← ping, facts, ssh, uptime, disk, memory
+    └── setup.yml          ← bootstrap, env-check, version, clean
+```

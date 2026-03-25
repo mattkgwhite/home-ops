@@ -1,0 +1,113 @@
+# =============================================================================
+# taskfiles/vault.yml
+# All ansible-vault operations - file encryption, string encryption,
+# password file management, audit, and vault-aware playbook runs
+# =============================================================================
+
+version: '3'
+
+tasks:
+
+  # ── File Operations ───────────────────────────────────────────────────────
+
+  create:
+    desc: "Create a new encrypted vault file. Usage: task vault:create FILE=vars/secrets.yml"
+    cmds:
+      - ansible-vault create {{.FILE}}
+
+  encrypt:
+    desc: "Encrypt a plaintext file. Usage: task vault:encrypt FILE=vars/secrets.yml"
+    cmds:
+      - ansible-vault encrypt {{.FILE}}
+
+  decrypt:
+    desc: "Decrypt an encrypted vault file to disk. Usage: task vault:decrypt FILE=vars/secrets.yml"
+    cmds:
+      - ansible-vault decrypt {{.FILE}}
+
+  edit:
+    desc: "Edit an encrypted vault file in place. Usage: task vault:edit FILE=vars/secrets.yml"
+    cmds:
+      - ansible-vault edit {{.FILE}}
+
+  view:
+    desc: "View an encrypted vault file without decrypting to disk. Usage: task vault:view FILE=vars/secrets.yml"
+    cmds:
+      - ansible-vault view {{.FILE}}
+
+  rekey:
+    desc: "Change the vault password on a single file. Usage: task vault:rekey FILE=vars/secrets.yml"
+    cmds:
+      - ansible-vault rekey {{.FILE}}
+
+  rekey-all:
+    desc: Rekey ALL encrypted vault files found in the project
+    cmds:
+      - find . -name "*.yml" -not -path "./.git/*" -exec grep -l "ANSIBLE_VAULT" {} \; | xargs ansible-vault rekey
+
+  # ── String / Value Encryption ─────────────────────────────────────────────
+
+  encrypt-string:
+    desc: "Encrypt a single string value (prompts for password). Usage: task vault:encrypt-string VAR=db_password"
+    cmds:
+      - ansible-vault encrypt_string --ask-vault-pass --stdin-name "{{.VAR}}"
+
+  encrypt-string-file:
+    desc: "Encrypt a string using the vault password file. Usage: task vault:encrypt-string-file VAR=db_password"
+    cmds:
+      - ansible-vault encrypt_string --vault-password-file {{.VAULT_PASS_FILE}} --stdin-name "{{.VAR}}"
+
+  # ── Password File Management ──────────────────────────────────────────────
+
+  create-passfile:
+    desc: Create a vault password file and automatically add it to .gitignore
+    cmds:
+      - "read -s -p 'Enter vault password: ' pass && echo $pass > {{.VAULT_PASS_FILE}}"
+      - chmod 600 {{.VAULT_PASS_FILE}}
+      - grep -q "{{.VAULT_PASS_FILE}}" .gitignore || echo "{{.VAULT_PASS_FILE}}" >> .gitignore
+      - echo "Vault password file created and added to .gitignore"
+
+  check-passfile:
+    desc: Check that the vault password file exists and has correct permissions (600)
+    cmds:
+      - test -f {{.VAULT_PASS_FILE}} && echo "✓ Vault password file exists" || echo "✗ Vault password file missing"
+      - stat -c "%a" {{.VAULT_PASS_FILE}} | grep -q "600" && echo "✓ Permissions OK (600)" || echo "✗ Permissions wrong - run chmod 600 {{.VAULT_PASS_FILE}}"
+
+  # ── Multiple Vault IDs ────────────────────────────────────────────────────
+
+  encrypt-id:
+    desc: "Encrypt a file with a specific vault ID. Usage: task vault:encrypt-id FILE=vars/secrets.yml VAULT_ID=prod"
+    cmds:
+      - ansible-vault encrypt --vault-id {{.VAULT_ID}}@prompt {{.FILE}}
+
+  decrypt-id:
+    desc: "Decrypt a file with a specific vault ID. Usage: task vault:decrypt-id FILE=vars/secrets.yml VAULT_ID=prod"
+    cmds:
+      - ansible-vault decrypt --vault-id {{.VAULT_ID}}@{{.VAULT_PASS_FILE}} {{.FILE}}
+
+  edit-id:
+    desc: "Edit a file using a specific vault ID. Usage: task vault:edit-id FILE=vars/secrets.yml VAULT_ID=prod"
+    cmds:
+      - ansible-vault edit --vault-id {{.VAULT_ID}}@{{.VAULT_PASS_FILE}} {{.FILE}}
+
+  # ── Audit & Find ──────────────────────────────────────────────────────────
+
+  list-encrypted:
+    desc: List all encrypted vault files found in the project
+    cmds:
+      - find . -name "*.yml" -not -path "./.git/*" -exec grep -l "ANSIBLE_VAULT" {} \;
+
+  audit:
+    desc: Show which var files are encrypted vs plaintext across the project
+    cmds:
+      - |
+        echo "=== Encrypted files ===" && \
+        find . \( -path "./group_vars/*" -o -path "./host_vars/*" -o -path "./vars/*" \) -name "*.yml" -exec grep -l "ANSIBLE_VAULT" {} \; && \
+        echo "" && \
+        echo "=== Plaintext files ===" && \
+        find . \( -path "./group_vars/*" -o -path "./host_vars/*" -o -path "./vars/*" \) -name "*.yml" -exec grep -L "ANSIBLE_VAULT" {} \;
+
+  check-encrypted:
+    desc: "Verify a specific file is encrypted. Usage: task vault:check-encrypted FILE=vars/secrets.yml"
+    cmds:
+      - grep -q "ANSIBLE_VAULT" {{.FILE}} && echo "✓ File is encrypted" || echo "✗ File is NOT encrypted - contains plaintext!"

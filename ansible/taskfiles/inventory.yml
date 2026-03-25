@@ -1,0 +1,23 @@
+# =============================================================================
+# taskfiles/inventory.yml
+# Inventory inspection, listing, and graph views
+# =============================================================================
+
+version: '3'
+
+tasks:
+
+  list:
+    desc: List all hosts in the inventory as JSON
+    cmds:
+      - ansible-inventory -i {{.INVENTORY}} --list
+
+  graph:
+    desc: Show the inventory as a tree graph
+    cmds:
+      - ansible-inventory -i {{.INVENTORY}} --graph
+
+  host:
+    desc: "Show vars for a specific host. Usage: task inventory:host HOST=webserver01"
+    cmds:
+      - ansible-inventory -i {{.INVENTORY}} --host {{.HOST}}

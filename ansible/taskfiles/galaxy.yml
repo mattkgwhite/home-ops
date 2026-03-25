@@ -1,0 +1,40 @@
+# =============================================================================
+# taskfiles/galaxy.yml
+# Ansible Galaxy - role and collection management
+# =============================================================================
+
+version: '3'
+
+tasks:
+
+  install:
+    desc: Install roles and collections from requirements.yml
+    cmds:
+      - ansible-galaxy install -r requirements.yml
+      - ansible-galaxy collection install -r requirements.yml
+
+  update:
+    desc: Force update all roles and collections from requirements.yml
+    cmds:
+      - ansible-galaxy install -r requirements.yml --force
+      - ansible-galaxy collection install -r requirements.yml --force
+
+  list-roles:
+    desc: List all installed Galaxy roles
+    cmds:
+      - ansible-galaxy role list
+
+  list-collections:
+    desc: List all installed Ansible collections
+    cmds:
+      - ansible-galaxy collection list
+
+  new-role:
+    desc: "Scaffold a new role under roles/. Usage: task galaxy:new-role ROLE=myrole"
+    cmds:
+      - ansible-galaxy role init roles/{{.ROLE}}
+
+  remove-role:
+    desc: "Remove an installed Galaxy role. Usage: task galaxy:remove-role ROLE=geerlingguy.nginx"
+    cmds:
+      - ansible-galaxy role remove {{.ROLE}}

@@ -1,0 +1,58 @@
+# =============================================================================
+# taskfiles/adhoc.yml
+# Ad-hoc commands, ping, facts, and SSH connectivity
+# =============================================================================
+
+version: '3'
+
+tasks:
+
+  ping:
+    desc: "Ping all hosts (or a subset). Usage: task adhoc:ping or task adhoc:ping LIMIT=webservers"
+    cmds:
+      - ansible -i {{.INVENTORY}} ${LIMIT:-all} -m ping
+
+  ping-one-line:
+    desc: Test SSH connectivity to all hosts with compact one-line output
+    cmds:
+      - ansible -i {{.INVENTORY}} all -m ping --one-line
+
+  facts:
+    desc: "Gather and display facts for hosts. Usage: task adhoc:facts LIMIT=webservers"
+    cmds:
+      - ansible -i {{.INVENTORY}} "{{.LIMIT}}" -m setup
+
+  facts-filter:
+    desc: "Gather specific facts. Usage: task adhoc:facts-filter LIMIT=all FILTER=ansible_os_family"
+    cmds:
+      - ansible -i {{.INVENTORY}} "{{.LIMIT}}" -m setup -a "filter={{.FILTER}}"
+
+  cmd:
+    desc: "Run an ad-hoc shell command. Usage: task adhoc:cmd LIMIT=all CMD=\"uptime\""
+    cmds:
+      - ansible -i {{.INVENTORY}} "{{.LIMIT}}" -a "{{.CMD}}"
+
+  shell:
+    desc: "Run an ad-hoc shell command (with shell features). Usage: task adhoc:shell LIMIT=all CMD=\"cat /etc/os-release\""
+    cmds:
+      - ansible -i {{.INVENTORY}} "{{.LIMIT}}" -m shell -a "{{.CMD}}"
+
+  ssh:
+    desc: "SSH into a specific host. Usage: task adhoc:ssh HOST=webserver01"
+    cmds:
+      - ssh -F ssh.cfg {{.HOST}}
+
+  uptime:
+    desc: "Check uptime on all hosts (or a subset). Usage: task adhoc:uptime or task adhoc:uptime LIMIT=webservers"
+    cmds:
+      - ansible -i {{.INVENTORY}} ${LIMIT:-all} -a "uptime"
+
+  disk:
+    desc: "Check disk usage on all hosts. Usage: task adhoc:disk or task adhoc:disk LIMIT=webservers"
+    cmds:
+      - ansible -i {{.INVENTORY}} ${LIMIT:-all} -a "df -h"
+
+  memory:
+    desc: "Check memory usage on all hosts. Usage: task adhoc:memory or task adhoc:memory LIMIT=webservers"
+    cmds:
+      - ansible -i {{.INVENTORY}} ${LIMIT:-all} -a "free -m"

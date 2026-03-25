@@ -1,0 +1,52 @@
+# =============================================================================
+# taskfiles/setup.yml
+# Bootstrap, environment checks, version info, and cleanup
+# =============================================================================
+
+version: '3'
+
+tasks:
+
+  bootstrap:
+    desc: Bootstrap the project - install requirements, syntax check, ping hosts
+    cmds:
+      - task: galaxy:install
+      - task: playbooks:syntax-check
+      - task: adhoc:ping
+
+  env-check:
+    desc: Validate environment - check all required tools are installed
+    cmds:
+      - which ansible          && echo "✓ ansible"
+      - which ansible-playbook && echo "✓ ansible-playbook"
+      - which ansible-lint     && echo "✓ ansible-lint"
+      - which ansible-vault    && echo "✓ ansible-vault"
+      - which ansible-galaxy   && echo "✓ ansible-galaxy"
+
+  version:
+    desc: Show Ansible and Python version info
+    cmds:
+      - ansible --version
+      - python3 --version
+
+  vault-passfile-check:
+    desc: Check vault password file exists and has correct permissions
+    cmds:
+      - test -f {{.VAULT_PASS_FILE}} && echo "✓ Vault password file exists" || echo "✗ Vault password file missing - run task vault:create-passfile"
+      - stat -c "%a" {{.VAULT_PASS_FILE}} | grep -q "600" && echo "✓ Permissions OK (600)" || echo "✗ Permissions wrong - run chmod 600 {{.VAULT_PASS_FILE}}"
+
+  clean-retry:
+    desc: Remove any .retry files left behind by failed runs
+    cmds:
+      - find . -name "*.retry" -delete && echo "✓ Cleaned up .retry files"
+
+  clean-cache:
+    desc: Clear the Ansible fact cache
+    cmds:
+      - rm -rf ~/.ansible/tmp && echo "✓ Fact cache cleared"
+
+  clean-all:
+    desc: Run all cleanup tasks (retry files and fact cache)
+    cmds:
+      - task: clean-retry
+      - task: clean-cache
