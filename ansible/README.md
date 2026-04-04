@@ -48,6 +48,8 @@ export pve1="$(op read op://homelab/ansible/proxmox)" / Powershell example "$env
 
 For the specifics of using ansible-playbooks - there needs to be some way to list all the playbooks and tasks that are available.
 
+*Note: All commands needs to be ran for the root of the repo, where the ansible.cfg is located. Or need to export the ansible.cfg location in shell*
+
 Below is an example command
 
 ## Tasks
@@ -75,6 +77,7 @@ ansible-playbook -i Kubernetes/inventory/hosts.yml maintenance/tasks/main.yml --
 ```shell
 ansible-playbook -i Kubernetes/inventory/hosts.yml maintenance/tasks/main.yml --check --ask-become-pass
 ```
+
 
 
 ### Structure
