@@ -5,35 +5,43 @@ all:
     # ansible_become: true
   children:
 
-    proxmox:
-      hosts:
-        pve1:
-          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/proxmox') }}"
-          ansible_user: root
-    docker:
-      hosts:
-        docker1:
-          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/docker') }}"
-    k3s:
-      hosts:
-        argo:
-          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/argo') }}"
-    discord:
-      hosts:
-        disco:
-          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/disco') }}"
+    # proxmox:
+    #   hosts:
+    #     pve1:
+    #       ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/proxmox') }}"
+    #       ansible_user: root
+    # docker:
+    #   hosts:
+    #     docker1:
+    #       ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/docker') }}"
+    # k3s:
+    #   hosts:
+    #     argo:
+    #       ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/argo') }}"
+    # discord:
+    #   hosts:
+    #     disco:
+    #       ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/disco') }}"
     hetzner:
       hosts:
-        viper:
-          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/viper') }}"
+        abel:
+          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/abel')}}"
+        hermes:
+          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/hermes') }}"
+        #viper:
+        #  ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/viper') }}"
+        # authentik:
+        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/authentik') }}"
+        # docker:
+        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/docker') }}"
+        # kubernetes:
+        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/kubernetes') }}"
+        # db:
+        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/db') }}"
+        # vps1:
+        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/vps1') }}"
         # vps2:
         #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/vps2') }}"
-        # vps3:
-        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/vps3') }}"
-        # vps4:
-        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/vps4') }}"
-        # vps5:
-        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/vps5') }}"
 
     ubuntu:
       children:
