@@ -6,7 +6,7 @@
   vars_prompt:
     - name: username
       prompt: "Enter the username to create"
-      private: no  # no = input is visible when typing
+      private: no
 
     - name: enable_sudo
       prompt: "Grant passwordless sudo access? (yes/no)"
@@ -19,31 +19,68 @@
       default: "/root/.ssh/authorized_keys"
 
   tasks:
-    - name: Ensure the user exists
+
+    - name: Validate username is not root
+      ansible.builtin.fail:
+        msg: "You cannot create a user named 'root' with this playbook."
+      when: username == "root"
+
+    - name: Check if user already exists
+      ansible.builtin.getent:
+        database: passwd
+        key: "{{ username }}"
+      register: user_exists
+      failed_when: false  # Don't fail if user is not found
+
+    - name: Abort if user already exists
+      ansible.builtin.fail:
+        msg: "User '{{ username }}' already exists on {{ inventory_hostname }}. Aborting to avoid overwriting."
+      when: user_exists.ansible_facts is defined and username in (user_exists.ansible_facts.getent_passwd | default({}))
+
+    - name: Create the user
       ansible.builtin.user:
         name: "{{ username }}"
         shell: "/bin/bash"
         home: "/home/{{ username }}"
         create_home: yes
+        password_lock: yes   # Disables password login; SSH key only
         groups: sudo
         append: yes
+      register: created_user
+
+    - name: Check SSH key source file exists on remote
+      ansible.builtin.stat:
+        path: "{{ root_ssh_key_path }}"
+      register: ssh_key_stat
+
+    - name: Abort if SSH key file is missing
+      ansible.builtin.fail:
+        msg: "SSH key file not found at '{{ root_ssh_key_path }}' on {{ inventory_hostname }}."
+      when: not ssh_key_stat.stat.exists
 
     - name: Read SSH keys from root user
       ansible.builtin.slurp:
         src: "{{ root_ssh_key_path }}"
       register: root_ssh_keys
 
-    - name: Set up SSH key for the user
+    - name: Set up SSH key for the new user
       ansible.builtin.authorized_key:
         user: "{{ username }}"
-        key: "{{ root_ssh_keys['content'] | b64decode }}"
+        key: "{{ root_ssh_keys['content'] | b64decode | trim }}"
         state: present
         manage_dir: yes
 
     - name: Ensure sudo access without password
       ansible.builtin.copy:
         dest: "/etc/sudoers.d/{{ username }}"
-        content: "{{ username }} ALL=(ALL) NOPASSWD: ALL"
+        content: "{{ username }} ALL=(ALL) NOPASSWD: ALL\n"
         mode: "0440"
-      when: enable_sudo | bool and username != "root"
+        validate: "/usr/sbin/visudo -cf %s"  # Validates sudoers syntax before writing
+      when: enable_sudo | lower == "yes"
 
+    - name: Confirm user creation
+      ansible.builtin.debug:
+        msg: >
+          User '{{ username }}' created successfully on {{ inventory_hostname }}.
+          Sudo access: {{ enable_sudo | lower == 'yes' }}.
+          SSH keys copied from: {{ root_ssh_key_path }}.
