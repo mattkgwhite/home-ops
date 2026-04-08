@@ -11,6 +11,7 @@ sudo apt install sshpass -y
 ## Sample Commands
 
 ### Ping machines via ansible as the root user, prompting for password at execution
+
 The below commands uses the inventory file called `static.yaml` as a reference, pinging the host / hosts listed under `[pvenodes]` using the root account via `--user=root` and prompting for a password `-k`
 
 ```shell
@@ -18,6 +19,7 @@ ansible pvenodes -i inventory -m ping --u <user>
 ```
 
 An alternative to the above example command:
+
 ```shell
 ansible all -i inventory -m ping
 ```
@@ -77,8 +79,6 @@ ansible-playbook -i Kubernetes/inventory/hosts.yml maintenance/tasks/main.yml --
 ```shell
 ansible-playbook -i Kubernetes/inventory/hosts.yml maintenance/tasks/main.yml --check --ask-become-pass
 ```
-
-
 
 ### Structure
 
