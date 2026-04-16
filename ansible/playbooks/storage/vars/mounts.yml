@@ -1,0 +1,26 @@
+# Define all mounts here. Each entry maps directly to an fstab line.
+fstab_mounts:
+  - name: "NAS media share"
+    src: "//192.168.1.100/media"        # remote path or device
+    path: "/mnt/media"                  # local mount point
+    fstype: "cifs"                      # cifs, nfs, ext4, etc.
+    opts: "credentials=/etc/samba/credentials,uid=1000,gid=1000,iocharset=utf8,vers=3.0"
+    state: "mounted"                    # mounted | present | unmounted | absent
+    backup: true                        # backup fstab before changes
+
+  - name: "NAS backup share"
+    src: "//192.168.1.100/backup"
+    path: "/mnt/backup"
+    fstype: "cifs"
+    opts: "credentials=/etc/samba/credentials,uid=1000,gid=1000,iocharset=utf8,vers=3.0"
+    state: "mounted"
+    backup: true
+
+  # NFS example
+  - name: "NFS data share"
+    src: "192.168.1.100:/exports/data"
+    path: "/mnt/data"
+    fstype: "nfs"
+    opts: "rw,sync,hard,intr,rsize=8192,wsize=8192,timeo=14"
+    state: "mounted"
+    backup: true

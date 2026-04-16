@@ -1,0 +1,13 @@
+---
+- name: Install cifs-utils
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Install prerequisites
+      ansible.builtin.apt:
+        name:
+          - cifs-utils
+        state: present
+        update_cache: true

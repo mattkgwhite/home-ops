@@ -1,0 +1,102 @@
+---
+- name: Manage fstab mounts
+  hosts: "{{ target_hosts | default('all') }}"
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - vars/mounts.yml
+
+  pre_tasks:
+    - name: Verify OS is Ubuntu
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution == "Ubuntu"
+        fail_msg: "This playbook is intended for Ubuntu only. Found: {{ ansible_distribution }}"
+
+    - name: Install required filesystem packages
+      ansible.builtin.apt:
+        name: "{{ fs_packages }}"
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      vars:
+        fs_packages: "{{ fstab_mounts
+          | map(attribute='fstype')
+          | unique
+          | map('extract', fstype_package_map)
+          | select('defined')
+          | list }}"
+        fstype_package_map:
+          cifs: cifs-utils
+          nfs: nfs-common
+          nfs4: nfs-common
+
+  tasks:
+    - name: Ensure mount point directories exist
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        mode: "0755"
+        owner: root
+        group: root
+      loop: "{{ fstab_mounts }}"
+      loop_control:
+        label: "{{ item.name }} -> {{ item.path }}"
+
+    - name: Deploy CIFS credentials file
+      ansible.builtin.template:
+        src: templates/credentials.j2
+        dest: /etc/samba/credentials
+        owner: root
+        group: root
+        mode: "0600"
+      when: fstab_mounts | selectattr('fstype', 'equalto', 'cifs') | list | length > 0
+      notify: Remount CIFS shares
+
+    - name: Manage fstab entries and mounts
+      ansible.posix.mount:
+        src: "{{ item.src }}"
+        path: "{{ item.path }}"
+        fstype: "{{ item.fstype }}"
+        opts: "{{ item.opts | default('defaults') }}"
+        state: "{{ item.state | default('mounted') }}"
+        backup: "{{ item.backup | default(true) }}"
+      loop: "{{ fstab_mounts }}"
+      loop_control:
+        label: "{{ item.name }} -> {{ item.path }}"
+      register: mount_results
+      notify: Reload systemd daemon
+
+    - name: Verify mounts are active
+      ansible.builtin.command:
+        cmd: "findmnt --target {{ item.path }} --noheadings"
+      register: mount_check
+      changed_when: false
+      failed_when: mount_check.rc != 0
+      loop: "{{ fstab_mounts }}"
+      loop_control:
+        label: "{{ item.path }}"
+      when: item.state == 'mounted'
+
+  post_tasks:
+    - name: Display mount status
+      ansible.builtin.debug:
+        msg: "{{ item.item.name }} mounted at {{ item.item.path }} — OK"
+      loop: "{{ mount_check.results }}"
+      loop_control:
+        label: "{{ item.item.path }}"
+      when:
+        - mount_check is defined
+        - item.rc is defined
+        - item.rc == 0
+
+  handlers:
+    - name: Reload systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Remount CIFS shares
+      ansible.builtin.command:
+        cmd: mount -a
+      changed_when: false

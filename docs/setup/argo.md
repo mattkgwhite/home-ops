@@ -62,7 +62,10 @@ kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main
   -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumgatewayclassconfigs.yaml \
   -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliuml2announcementpolicies.yaml \
   -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumpodippools.yaml \
-  -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumloadbalancerippools.yaml
+  -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumloadbalancerippools.yaml \
+  -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumendpoints.yaml \
+  -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnodes.yaml \
+  -f https://raw.githubusercontent.com/cilium/cilium/refs/heads/main/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml
 ```
 
 Gateway-Api:
@@ -189,6 +192,32 @@ echo "$argocd_config" | kubectl apply --filename -
 - [Gateway](https://github.com/kubernetes-sigs/gateway-api/tree/main/config/crd/standard)
 
 - [External Secret](https://github.com/external-secrets/external-secrets/tree/main/config/crds/bases)
+
+```shell
+kubectl apply -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/external-secrets.io_clusterexternalsecrets.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/external-secrets.io_clusterpushsecrets.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/external-secrets.io_clustersecretstores.yaml --server-side \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/external-secrets.io_externalsecrets.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/external-secrets.io_pushsecrets.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/external-secrets.io_secretstores.yaml --server-side\
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/generators.external-secrets.io_acraccesstokens.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/generators.external-secrets.io_cloudsmithaccesstokens.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/generators.external-secrets.io_clustergenerators.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/generators.external-secrets.io_ecrauthorizationtokens.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/generators.external-secrets.io_fakes.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/generators.external-secrets.io_gcraccesstokens.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/generators.external-secrets.io_generatorstates.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/generators.external-secrets.io_githubaccesstokens.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/generators.external-secrets.io_grafanas.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/generators.external-secrets.io_mfas.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/generators.external-secrets.io_passwords.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/generators.external-secrets.io_quayaccesstokens.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/generators.external-secrets.io_sshkeys.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/generators.external-secrets.io_stssessiontokens.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/generators.external-secrets.io_uuids.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/generators.external-secrets.io_vaultdynamicsecrets.yaml \
+  -f https://raw.githubusercontent.com/external-secrets/external-secrets/refs/heads/main/config/crds/bases/generators.external-secrets.io_webhooks.yaml
+``` 
 
 - Cert-Manager - These are contained within the `release` on Github, for example [v1.17.1](https://github.com/cert-manager/cert-manager/releases/tag/v1.17.1) has a file within assets called `cert-manager.crds.yaml`. This can just be applied using `k apply -f <copy-link-address>`
 
