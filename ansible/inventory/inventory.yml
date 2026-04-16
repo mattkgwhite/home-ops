@@ -27,9 +27,9 @@ all:
         abel:
           ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/abel')}}"
         hermes:
-          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/hermes') }}"
+          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/hermes')}}"
         argo:
-          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/argo') }}"
+          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/argo')}}"
         #viper:
         #  ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/viper') }}"
         # authentik:
