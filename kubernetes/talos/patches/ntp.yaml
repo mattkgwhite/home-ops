@@ -1,0 +1,6 @@
+machine:
+  time:
+    servers:
+      - ntp1.hetzner.de
+      - ntp2.hetzner.com
+      - ntp3.hetzner.net
