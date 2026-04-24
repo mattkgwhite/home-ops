@@ -54,10 +54,11 @@ spec:
   source:
     chart: cilium
     repoURL: https://helm.cilium.io/
-    targetRevision: 1.19.2
+    targetRevision: 1.19.3
     helm:
       valuesObject:
-        autoDirectNodeRoutes: true
+        # autoDirectNodeRoutes: true # for multi-node
+        autoDirectNodeRoutes: false
         bandwidthManager:
           enabled: true
           # rk1's run on 5.10 version of kernel, 5.12 is required
@@ -101,10 +102,11 @@ spec:
         kubeProxyReplacement: true
         kubeProxyReplacementHealthzBindAddr: 0.0.0.0:10256
         l2announcements:
-          enabled: true
+          enabled: false
         loadBalancer:
           algorithm: maglev
-          mode: dsr
+          # mode: dsr # for private machines
+          mode: snat # for public vps
         localRedirectPolicy: true
         operator:
           replicas: 1
@@ -115,7 +117,7 @@ spec:
         routingMode: native
         gatewayAPI:
           enabled: true
-          externalTrafficPolicy: Local
+          externalTrafficPolicy: Cluster
           secretsNamespace:
             create: false
             name: certificate
@@ -247,27 +249,6 @@ spec:
       prune: true
       selfHeal: true
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: hubble-grpc
-  namespace: kube-system
-  annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
-spec:
-  ingressClassName: ingress-nginx-internal
-  rules:
-    - host: hubble.nahops.co.uk
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: hubble-ui
-                port:
-                  number: 80
----
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -286,25 +267,6 @@ spec:
     - backendRefs:
         - name: hubble-ui
           port: 80
-# ---
-# apiVersion: gateway.networking.k8s.io/v1
-# kind: GRPCRoute
-# metadata:
-#   name: hubble
-#   namespace: kube-system
-#   annotations:
-#     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-# spec:
-#   parentRefs:
-#   - name: internal
-#     namespace: gateway
-#     sectionName: https
-#   hostnames:
-#   - "hubble.nahops.co.uk"
-#   rules:
-#   - backendRefs:
-#     - name: hubble-ui
-#       port: 80
 ---
 apiVersion: externaldns.k8s.io/v1alpha1
 kind: DNSEndpoint
@@ -312,7 +274,7 @@ metadata:
   name: hubble-private
   namespace: kube-system
   annotations:
-    external-dns.custom/type: private
+    external-dns.custom/type: public
 spec:
   endpoints:
     - dnsName: hubble.nahops.co.uk
@@ -333,7 +295,7 @@ metadata:
   name: pool
 spec:
   blocks:
-    -cidr: "167.235.248.168/32"
+    - cidr: "167.235.248.168/32"
 # apiVersion: cilium.io/v2alpha1
 # kind: CiliumLoadBalancerIPPool
 # metadata:
