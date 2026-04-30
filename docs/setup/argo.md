@@ -96,6 +96,8 @@ Need to run the following in order to install the relevant missing CRDs from the
 
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/refs/heads/main/config/crd/experimental/gateway.networking.k8s.io_httproutes.yaml --server-side
+
+below need fixing or investigating as to make sure that the urls are
 kubectl apply -f https://raw.githubusercontent.com/envoyproxy/gateway/refs/heads/main/charts/gateway-helm/crds/generated/gateway.envoyproxy.io_envoyproxies.yaml --server-side --force-conflicts
 kubectl apply -f https://raw.githubusercontent.com/envoyproxy/gateway/refs/heads/main/charts/gateway-helm/crds/gatewayapi-crds.yaml --server-side --force-conflicts
 ```
@@ -154,7 +156,8 @@ kubectl label nodes mynodename kubernetes.io/role=worker
 
 export domain="$(op read op://homelab/stringreplacesecret/domain)" / Powershell example "$env:DOMAIN = & op read "op://homelab/stringreplacesecret/domain" "
 # export cloudflaretunnelid="$(op read op://homelab/stringreplacesecret/cloudflaretunnelid)"
-export onepasswordconnect_json="$(op read op://homelab/1Password/1password-credentials.json | base64)"
+# export onepasswordconnect_json="$(op read op://homelab/1Password/1password-credentials.json | base64)"
+export onepasswordconnect_json="$(op read op://homelab/1Password/1password-credentials.json)"
 export externalsecrets_token="$(op read op://homelab/1Password/token)"
 
 kubectl create namespace argocd
@@ -243,6 +246,18 @@ kubectl apply -f https://raw.githubusercontent.com/external-secrets/external-sec
 
 ```shell
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.20.2/cert-manager.crds.yaml
+
+-[External-DNS](https://github.com/kubernetes-sigs/external-dns/blob/master/config/crd/standard/dnsendpoints.externaldns.k8s.io.yaml)
+
+```shell
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/external-dns/refs/heads/master/config/crd/standard/dnsendpoints.externaldns.k8s.io.yaml
+```
+
+- [ArgoCD]()
+
+```shell
+kubectl apply -f https://raw.githubusercontent.com/argoproj/argo-cd/refs/heads/master/manifests/crds/application-crd.yaml
+```
 
 ### Utils
 
