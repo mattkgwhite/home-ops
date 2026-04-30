@@ -141,7 +141,7 @@ spec:
   gatewayClassName: cilium
   infrastructure:
     annotations:
-      io.cilium/lb-ipam-ips: 167.235.248.168
+      io.cilium/lb-ipam-ips: 159.69.82.54
   listeners:
     - protocol: HTTP
       port: 80
@@ -190,4 +190,4 @@ spec:
     - dnsName: gw.nahops.co.uk
       recordType: A
       targets:
-        - "167.235.248.168"
+        - "159.69.82.54"
