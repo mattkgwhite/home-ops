@@ -111,7 +111,7 @@ metadata:
   namespace: argocd
 spec:
   parentRefs:
-    - name: internal
+    - name: default # change me to internal
       namespace: gateway
       sectionName: https
   hostnames:
@@ -144,13 +144,14 @@ metadata:
   name: argocd-private
   namespace: argocd
   annotations:
-    external-dns.custom/type: private
+    external-dns.custom/type: public
 spec:
   endpoints:
     - dnsName: argocd.nahops.co.uk
       recordType: CNAME
       targets:
-        - intgw.nahops.co.uk
+        # - intgw.nahops.co.uk
+        - gw.nahops.co.uk
 ---
 ## Private Repository Secret example
 ## https://argo-cd.readthedocs.io/en/stable/user-guide/private-repositories/
