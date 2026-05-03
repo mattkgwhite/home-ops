@@ -24,12 +24,12 @@ all:
     #       ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/disco') }}"
     hetzner:
       hosts:
-        abel:
-          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/abel')}}"
+        chaos:
+          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/chaos')}}"
         hermes:
           ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/hermes')}}"
-        argo:
-          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/argo')}}"
+        # argo:
+        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/argo')}}"
         #viper:
         #  ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/viper') }}"
         # authentik:
