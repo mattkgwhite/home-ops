@@ -3,7 +3,7 @@ kind: Namespace
 apiVersion: v1
 metadata:
   name: gateway
----
+# ---
 # =============================================================================
 # PRIVATE (multi-node / home lab) CONFIGURATION
 # Uncomment this section and comment out the PUBLIC section below to switch
