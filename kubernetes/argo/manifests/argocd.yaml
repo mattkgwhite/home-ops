@@ -152,7 +152,7 @@ spec:
       targets:
         # - intgw.nahops.co.uk
         - gw.nahops.co.uk
----
+# ---
 ## Private Repository Secret example
 ## https://argo-cd.readthedocs.io/en/stable/user-guide/private-repositories/
 # apiVersion: v1
