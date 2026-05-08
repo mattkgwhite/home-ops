@@ -1,0 +1,205 @@
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: argocd
+# ---
+# apiVersion: external-secrets.io/v1beta1
+# kind: ExternalSecret
+# metadata:
+#   name: sso
+#   namespace: argocd
+#   labels:
+#     app.kubernetes.io/part-of: argocd
+# spec:
+#   refreshInterval: "5m"
+#   secretStoreRef:
+#     kind: ClusterSecretStore
+#     name: 1password
+#   target:
+#     creationPolicy: Owner
+#   data:
+#     - secretKey: client_id
+#       remoteRef:
+#         key: sso
+#         property: argocd_client_id
+#     - secretKey: client_secret
+#       remoteRef:
+#         key: sso
+#         property: argocd_client_secret
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+spec:
+  destination:
+    namespace: argocd
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: argo-cd
+    repoURL: https://argoproj.github.io/argo-helm
+    targetRevision: 9.5.11
+    helm:
+      valuesObject:
+        configs:
+          params:
+            server.insecure: true
+          rbac:
+            policy.csv: |
+              g, ArgoCD Admin, role:admin
+        repoServer:
+          rbac:
+            - apiGroups: [""]
+              resources: ["secrets"]
+              verbs: ["get", "watch", "list"]
+        deploymentAnnotations:
+          reloader.stakater.com/auto: "true"
+        dex.config: |
+          connectors:
+            - type: oidc
+              name: authentik
+              id: authentik
+              config:
+                issuer: https://<your-authentik-url>/application/o/argocd/
+                clientID: $sso:client_id
+                clientSecret: $sso:client_secret
+                insecureEnableGroups: true
+                scopes:
+                  - openid
+                  - profile
+                  - email
+        rbac:
+          policy.csv: |
+            g, ArgoCD Admin, role:admin
+          # policy.default: ""
+          # policy.matchMode: glob
+          # scopes: '[groups]'
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    # syncOptions:
+    # - serversideApply=true
+    # - force-conflicts=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: default
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destinations:
+    - name: "*"
+      namespace: "*"
+      server: "*"
+  sourceRepos:
+    - "*"
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: argocd
+  namespace: argocd
+spec:
+  parentRefs:
+    - name: default # change me to internal
+      namespace: gateway
+      sectionName: https
+  hostnames:
+    - "argocd.nahops.co.uk"
+  rules:
+    - backendRefs:
+        - name: argocd-server
+          port: 443
+# ---
+# apiVersion: gateway.networking.k8s.io/v1
+# kind: GRPCRoute
+# metadata:
+#   name: argocd
+#   namespace: argocd
+# spec:
+#   parentRefs:
+#   - name: internal
+#     namespace: gateway
+#     sectionName: https
+#   hostnames:
+#   - "argocd.nahops.co.uk"
+#   rules:
+#   - backendRefs:
+#     - name: argocd-server
+#       port: 80
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  name: argocd-private
+  namespace: argocd
+  annotations:
+    external-dns.custom/type: public
+spec:
+  endpoints:
+    - dnsName: argocd.nahops.co.uk
+      recordType: CNAME
+      targets:
+        # - intgw.nahops.co.uk
+        - gw.nahops.co.uk
+# ---
+## Private Repository Secret example
+## https://argo-cd.readthedocs.io/en/stable/user-guide/private-repositories/
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: github
+#   namespace: argocd
+#   labels:
+#     argocd.argoproj.io/secret-type: repo-creds
+# type: Opaque
+# stringData:
+#   password: github_pat_xxxxxxxx
+#   url:  https://github.com/xxxxxxxx/argocd-homelab.git
+#   username: xxxxxxxx
+#   type: git
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  labels:
+    argocd.argoproj.io/instance: manifests
+  name: homelab-manifest
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        files:
+          - path: kubernetes/argo/manifests/*.yaml
+        repoURL: https://github.com/mattkgwhite/home-ops.git
+        revision: main
+  goTemplate: true
+  template:
+    metadata:
+      name: '{{.path.basename}}.manifest'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/mattkgwhite/home-ops.git
+        path: '{{ .path.path }}'
+        targetRevision: HEAD
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{.path.basename}}'
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+        automated:
+          allowEmpty: true
+          prune: true
+          selfHeal: true
