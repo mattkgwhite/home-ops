@@ -90,6 +90,7 @@ metadata:
   annotations:
     tailscale.com/proxy-group: tailscale-gateway
     tailscale.com/hostname: argocd
+    # tailscale.com/proxy-class: debug # Optional: Use a specific proxy class for debugging
 spec:
   type: LoadBalancer
   loadBalancerClass: tailscale
