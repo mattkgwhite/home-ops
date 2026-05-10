@@ -1,188 +1,78 @@
----
-kind: Namespace
-apiVersion: v1
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
 metadata:
-  name: gateway
-# ---
-# =============================================================================
-# PRIVATE (multi-node / home lab) CONFIGURATION
-# Uncomment this section and comment out the PUBLIC section below to switch
-# =============================================================================
-# apiVersion: gateway.networking.k8s.io/v1
-# kind: Gateway
-# metadata:
-#   name: internal
-#   namespace: gateway
-# spec:
-#   gatewayClassName: cilium
-#   infrastructure:
-#     annotations:
-#       io.cilium/lb-ipam-ips: 192.168.2.10
-#   listeners:
-#     - protocol: HTTP
-#       port: 80
-#       name: http
-#       allowedRoutes:
-#         namespaces:
-#           from: Same
-#     - protocol: HTTPS
-#       port: 443
-#       name: https
-#       tls:
-#         certificateRefs:
-#           - kind: Secret
-#             name: wildcard-production
-#             namespace: certificate
-#       allowedRoutes:
-#         namespaces:
-#           from: All
-# ---
-# apiVersion: gateway.networking.k8s.io/v1
-# kind: HTTPRoute
-# metadata:
-#   name: httpsredirect-internalgw
-#   namespace: gateway
-# spec:
-#   parentRefs:
-#     - name: internal
-#       namespace: gateway
-#       sectionName: http
-#   rules:
-#     - filters:
-#         - requestRedirect:
-#             scheme: https
-#             statusCode: 301
-#           type: RequestRedirect
-# ---
-# apiVersion: externaldns.k8s.io/v1alpha1
-# kind: DNSEndpoint
-# metadata:
-#   name: intgw
-#   namespace: gateway
-#   annotations:
-#     external-dns.custom/type: private
-# spec:
-#   endpoints:
-#     - dnsName: intgw.nahops.co.uk
-#       recordType: A
-#       targets:
-#         - "192.168.2.10"
-# ---
-# apiVersion: gateway.networking.k8s.io/v1
-# kind: Gateway
-# metadata:
-#   name: external
-#   namespace: gateway
-# spec:
-#   gatewayClassName: cilium
-#   infrastructure:
-#     annotations:
-#       io.cilium/lb-ipam-ips: 192.168.2.11
-#   listeners:
-#     - protocol: HTTP
-#       port: 80
-#       name: http
-#       allowedRoutes:
-#         namespaces:
-#           from: Same
-#     - protocol: HTTPS
-#       port: 443
-#       name: https
-#       tls:
-#         certificateRefs:
-#           - kind: Secret
-#             name: wildcard-production
-#             namespace: certificate
-#       allowedRoutes:
-#         namespaces:
-#           from: All
-# ---
-# apiVersion: gateway.networking.k8s.io/v1
-# kind: HTTPRoute
-# metadata:
-#   name: httpsredirect-externalgw
-#   namespace: gateway
-# spec:
-#   parentRefs:
-#     - name: external
-#       namespace: gateway
-#       sectionName: http
-#   rules:
-#     - filters:
-#         - requestRedirect:
-#             scheme: https
-#             statusCode: 301
-#           type: RequestRedirect
-# ---
-# apiVersion: externaldns.k8s.io/v1alpha1
-# kind: DNSEndpoint
-# metadata:
-#   name: extgw
-#   namespace: gateway
-#   annotations:
-#     external-dns.custom/type: private
-# spec:
-#   endpoints:
-#     - dnsName: extgw.nahops.co.uk
-#       recordType: A
-#       targets:
-#         - "192.168.2.11"
-# =============================================================================
-# PUBLIC (single-node / VPS) CONFIGURATION - ACTIVE
-# Comment out this section and uncomment the PRIVATE section above to switch
-# =============================================================================
+  name: envoygateway-argo
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: argo
+    namespace: envoy-gateway
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: argo
+  namespace: envoy-gateway
+spec:
+  logging:
+    level:
+      default: info
+  shutdown:
+    drainTimeout: 180s
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        externalTrafficPolicy: Cluster
+  # telemetry: ...
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: gateway-tls-reference
+  namespace: certificate
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: envoy-gateway
+  to:
+    - group: ""
+      kind: Secret
+      name: wildcard-production
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: default
-  namespace: gateway
+  name: public-gateway
+  namespace: envoy-gateway
 spec:
-  gatewayClassName: cilium
-  infrastructure:
-    annotations:
-      io.cilium/lb-ipam-ips: 159.69.82.54
+  gatewayClassName: envoygateway-argo
+  addresses:
+    - type: IPAddress
+      value: "159.69.82.54"
   listeners:
-    - protocol: HTTP
-      port: 80
-      name: http
-      allowedRoutes:
-        namespaces:
-          from: All
-    - protocol: HTTPS
+    - name: https
+      protocol: HTTPS
       port: 443
-      name: https
       tls:
+        mode: Terminate
         certificateRefs:
-          - kind: Secret
-            name: wildcard-production
+          - name: wildcard-production
             namespace: certificate
+            group: ""
+            kind: Secret
       allowedRoutes:
         namespaces:
           from: All
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: httpsredirect
-  namespace: gateway
-spec:
-  parentRefs:
-    - name: default
-      namespace: gateway
-      sectionName: http
-  rules:
-    - filters:
-        - requestRedirect:
-            scheme: https
-            statusCode: 301
-          type: RequestRedirect
 ---
 apiVersion: externaldns.k8s.io/v1alpha1
 kind: DNSEndpoint
 metadata:
   name: gw
-  namespace: gateway
+  namespace: envoy-gateway
   annotations:
     external-dns.custom/type: public
 spec:
@@ -191,3 +81,42 @@ spec:
       recordType: A
       targets:
         - "159.69.82.54"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-tailscale
+  namespace: argocd
+  annotations:
+    tailscale.com/proxy-group: tailscale-gateway
+    tailscale.com/hostname: argocd
+spec:
+  type: LoadBalancer
+  loadBalancerClass: tailscale
+  ports:
+    - name: https
+      port: 443
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/name: argocd-server
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-tailscale
+  namespace: argocd
+spec:
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - argocd
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80
