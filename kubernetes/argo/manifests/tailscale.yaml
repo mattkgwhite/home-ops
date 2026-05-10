@@ -76,3 +76,16 @@ spec:
     syncOptions:
       - ServerSideApply=true
       - CreateNamespace=true
+---
+apiVersion: tailscale.com/v1alpha1
+kind: ProxyClass
+metadata:
+  name: debug
+  namespace: tailscale
+spec:
+  statefulSet:
+    pod:
+      tailscaleContainer:
+        env:
+          - name: TS_DEBUG_INGRESS
+            value: "true"
