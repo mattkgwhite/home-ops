@@ -36,6 +36,14 @@ kubectl create secret generic 1passwordconnect --namespace external-secrets --fr
 
 ## Installation
 
+Current stable deployment is as per the below:
+*Note the below image has the service loadbalancer deployed, which will be required as part of the initial install of K3s, as per the command below the image will install if used*
+![alt text](image.png)
+
+```shell
+curl -fL https://get.k3s.io | INSTALL_K3S_CHANNEL=latest sh -s - server --cluster-init --kube-apiserver-arg default-not-ready-toleration-seconds=10 --kube-apiserver-arg default-unreachable-toleration-seconds=10 --disable=traefik,local-storage
+```
+
 ## Requirements
 
 Gateway-Api:
