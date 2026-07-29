@@ -54,7 +54,7 @@ spec:
   source:
     chart: cilium
     repoURL: https://helm.cilium.io/
-    targetRevision: 1.19.4
+    targetRevision: 1.19.6
     helm:
       valuesObject:
         # autoDirectNodeRoutes: true # for multi-node
@@ -169,7 +169,7 @@ spec:
   source:
     chart: coredns
     repoURL: https://coredns.github.io/helm
-    targetRevision: 1.45.2
+    targetRevision: 1.46.2
     helm:
       valuesObject:
         fullnameOverride: coredns
