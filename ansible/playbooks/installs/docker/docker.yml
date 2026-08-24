@@ -20,7 +20,7 @@
         state: present
 
     - name: Add Docker apt repository
-      ansible.builtin.apt_repository:
+      ansible.builtin.deb822_repository:
         repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_facts['distribution_release'] }} stable"
         state: present
 
