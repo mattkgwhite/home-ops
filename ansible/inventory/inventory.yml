@@ -30,20 +30,10 @@ all:
           ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/hermes')}}"
         moros:
           ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/moros')}}"
-        #viper:
-        #  ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/viper') }}"
-        # authentik:
-        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/authentik') }}"
-        # docker:
-        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/docker') }}"
-        # kubernetes:
-        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/kubernetes') }}"
+        hades:
+          ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/hades')}}"
         # db:
         #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/db') }}"
-        # vps1:
-        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/vps1') }}"
-        # vps2:
-        #   ansible_host: "{{ lookup('pipe', 'op read op://homelab/ansible/vps2') }}"
 
     ubuntu:
       children:
