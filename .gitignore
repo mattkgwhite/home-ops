@@ -40,3 +40,8 @@ kubernetes/flux/talos/talconfig.yaml
 .venv/
 .DS_Store
 Thumbs.db
+
+# Talos
+talosconfig
+controlplane.yaml
+worker.yaml

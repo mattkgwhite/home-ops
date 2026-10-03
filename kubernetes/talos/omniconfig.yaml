@@ -1,0 +1,7 @@
+contexts:
+    default:
+        url: https://omni.<tail-net>.ts.net/
+        auth:
+            siderov1:
+                identity: admin@omni
+context: default

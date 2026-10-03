@@ -1,0 +1,13 @@
+apiVersion: v1alpha1
+kind: StaticHostConfig
+name: 172.16.0.3
+hostnames:
+  - omni.<tail-net>.ts.net
+---
+apiVersion: v1alpha1
+kind: TrustedRootsConfig
+name: omni-internal-ca
+certificates: |
+  -----BEGIN CERTIFICATE-----
+  <certificate>
+  -----END CERTIFICATE-----

@@ -1,0 +1,13 @@
+---
+apiVersion: v1alpha1
+kind: SideroLinkConfig
+apiUrl: https://omni.<tail-net>.ts.net:8090/?jointoken=<token>
+---
+apiVersion: v1alpha1
+kind: EventSinkConfig
+endpoint: '[<address>]:8091'
+---
+apiVersion: v1alpha1
+kind: KmsgLogConfig
+name: omni-kmsg
+url: tcp://[<address>]:8092
