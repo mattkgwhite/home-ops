@@ -178,9 +178,14 @@ spec:
         service:
           name: kube-dns
           clusterIP: "10.96.0.10"
+          selector:
+            k8s-app: kube-dns
         serviceAccount:
           create: true
         deployment:
+          selector:
+            matchLabels:
+              k8s-app: kube-dns
           annotations:
             reloader.stakater.com/auto: "true"
         servers:
