@@ -107,8 +107,8 @@ spec:
           enabled: false
         loadBalancer:
           algorithm: maglev
-          mode: dsr # for private machines
-          # mode: snat # for public vps
+          mode: snat # for public machines / VPS
+          # mode: dsr # for private machines
         localRedirectPolicy: true
         operator:
           replicas: 1
@@ -116,7 +116,9 @@ spec:
         rollOutCiliumPods: true
         securityContext:
           privileged: true
-        routingMode: native
+        routingMode: tunnel
+        tunnelProtocol: vxlan
+        tunnelPort: 4789
         gatewayAPI:
           enabled: true
           externalTrafficPolicy: Cluster

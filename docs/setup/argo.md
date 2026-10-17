@@ -192,6 +192,12 @@ echo "$argocd_values" | helm template $argocd_name $argocd_chart --repo $argocd_
 echo "$argocd_config" | kubectl apply --filename -
 ```
 
+### Manage cluster networking from Git
+
+The `homelab-manifest` ApplicationSet in `kubernetes/argo/manifests/argocd.yaml` creates `kube-system.manifest` and `tailscale.manifest`. Each reads one explicitly selected file from `kubernetes/argo/manifests` on `main`, automatically applies changes, and self-heals drift. These parents manage the Cilium, CoreDNS, and Tailscale Application definitions and related existing resources; their Helm Applications manage the generated workloads.
+
+Keep the corrected networking manifests in Git before enabling these parents. See [Talos networking persistence and activation](talos.md#persist-the-fixes-through-argo-cd) for the source files, activation commands, and reboot verification checks.
+
 ### CRDs
 
 - [Cilium](https://github.com/cilium/cilium/tree/main/pkg/k8s/apis/cilium.io/client/crds/v2alpha1)

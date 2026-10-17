@@ -20,6 +20,11 @@ spec:
   target:
     name: operator-oauth
     creationPolicy: Owner
+    template:
+      metadata:
+        annotations:
+          argocd.argoproj.io/sync-options: Prune=false
+          argocd.argoproj.io/compare-options: IgnoreExtraneous
   data:
     - secretKey: client_id
       remoteRef:
@@ -51,7 +56,7 @@ spec:
   source:
     repoURL: https://pkgs.tailscale.com/helmcharts
     chart: tailscale-operator
-    targetRevision: 1.102.4
+    targetRevision: 1.104.1
     helm:
       valuesObject:
         installCRDs: true
@@ -59,15 +64,6 @@ spec:
           hostname: tailscale-operator
           defaultTags:
             - tag:k8s
-        oauth:
-          clientId:
-            secret:
-              name: operator-oauth
-              key: client_id
-          clientSecret:
-            secret:
-              name: operator-oauth
-              key: client_secret
         apiServerProxyConfig:
           mode: "noauth"
   syncPolicy:
@@ -91,3 +87,26 @@ spec:
         env:
           - name: TS_DEBUG_INGRESS
             value: "true"
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-tailscale
+  namespace: argocd
+  annotations:
+    tailscale.com/hostname: argo
+spec:
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - argo
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80

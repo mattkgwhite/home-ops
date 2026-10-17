@@ -100,26 +100,3 @@ spec:
 #       targetPort: 8080
 #   selector:
 #     app.kubernetes.io/name: argocd-server
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: argocd-tailscale
-  namespace: argocd
-  annotations:
-    tailscale.com/hostname: argo
-spec:
-  ingressClassName: tailscale
-  tls:
-    - hosts:
-        - argo
-  rules:
-    - http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: argocd-server
-                port:
-                  number: 80

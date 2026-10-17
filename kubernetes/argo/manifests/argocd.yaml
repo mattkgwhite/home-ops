@@ -162,26 +162,33 @@ spec:
   generators:
     - git:
         files:
-          - path: kubernetes/argo/manifests/*.yaml
+          - path: kubernetes/argo/manifests/kube-system.yaml
+          - path: kubernetes/argo/manifests/tailscale.yaml
         repoURL: https://github.com/mattkgwhite/home-ops.git
         revision: main
   goTemplate: true
+  goTemplateOptions:
+    - missingkey=error
+  syncPolicy:
+    preserveResourcesOnDeletion: true
   template:
     metadata:
-      name: '{{.path.basename}}.manifest'
+      name: '{{ trimSuffix ".yaml" .path.filename }}.manifest'
     spec:
       project: default
       source:
         repoURL: https://github.com/mattkgwhite/home-ops.git
         path: '{{ .path.path }}'
-        targetRevision: HEAD
+        targetRevision: main
+        directory:
+          include: '{{ .path.filename }}'
       destination:
         server: https://kubernetes.default.svc
-        namespace: '{{.path.basename}}'
+        namespace: '{{ trimSuffix ".yaml" .path.filename }}'
       syncPolicy:
         syncOptions:
           - CreateNamespace=true
+          - ServerSideApply=true
         automated:
-          allowEmpty: true
-          prune: true
+          prune: false
           selfHeal: true
