@@ -68,6 +68,8 @@ spec:
           # disable ebpf due to issues
           # https://github.com/cilium/cilium/issues/30510#issuecomment-1926155601
           # hostLegacyRouting: true
+        extraConfig:
+          enable-remote-node-masquerade: "true"
         envoy:
           enabled: true
         cluster:
@@ -174,6 +176,9 @@ spec:
       valuesObject:
         fullnameOverride: coredns
         replicaCount: 1
+        rollingUpdate:
+          maxUnavailable: 0
+          maxSurge: 1
         k8sAppLabelOverride: kube-dns
         service:
           name: kube-dns
@@ -240,6 +245,8 @@ spec:
               matchLabels:
                 app.kubernetes.io/instance: coredns
   syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
     automated:
       allowEmpty: true
       prune: true
