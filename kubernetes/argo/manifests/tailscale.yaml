@@ -110,3 +110,24 @@ spec:
                 name: argocd-server
                 port:
                   number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gotify-tailscale
+  namespace: gotify
+spec:
+  ingressClassName: tailscale
+  tls:
+    - hosts: 
+        - gotify
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gotify
+                port:
+                  number: 8080
