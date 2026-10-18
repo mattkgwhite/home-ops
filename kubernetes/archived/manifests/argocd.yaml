@@ -115,7 +115,7 @@ spec:
       namespace: gateway
       sectionName: https
   hostnames:
-    - "argocd.nahops.co.uk"
+    - "argocd.<domain>"
   rules:
     - backendRefs:
         - name: argocd-server
@@ -132,26 +132,26 @@ spec:
 #     namespace: gateway
 #     sectionName: https
 #   hostnames:
-#   - "argocd.nahops.co.uk"
+#   - "argocd.<domain>"
 #   rules:
 #   - backendRefs:
 #     - name: argocd-server
 #       port: 80
----
-apiVersion: externaldns.k8s.io/v1alpha1
-kind: DNSEndpoint
-metadata:
-  name: argocd-private
-  namespace: argocd
-  annotations:
-    external-dns.custom/type: public
-spec:
-  endpoints:
-    - dnsName: argocd.nahops.co.uk
-      recordType: CNAME
-      targets:
-        # - intgw.nahops.co.uk
-        - gw.nahops.co.uk
+# ---
+# apiVersion: externaldns.k8s.io/v1alpha1
+# kind: DNSEndpoint
+# metadata:
+#   name: argocd-private
+#   namespace: argocd
+#   annotations:
+#     external-dns.custom/type: public
+# spec:
+#   endpoints:
+#     - dnsName: argocd.<domain>
+#       recordType: CNAME
+#       targets:
+#         # - <ip>
+#         - <ip>
 # ---
 ## Private Repository Secret example
 ## https://argo-cd.readthedocs.io/en/stable/user-guide/private-repositories/

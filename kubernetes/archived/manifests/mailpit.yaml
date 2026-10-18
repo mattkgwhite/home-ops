@@ -77,7 +77,7 @@ spec:
     #   namespace: gateway
     #   sectionName: https
   hostnames:
-    - "mailpit.nahops.co.uk"
+    - "mailpit.<domain>"
   rules:
     # - matches:
     #     - path:
@@ -87,20 +87,20 @@ spec:
         - name: mailpit
           port: 8025
 ---
-apiVersion: externaldns.k8s.io/v1alpha1
-kind: DNSEndpoint
-metadata:
-  name: mailpit-private
-  namespace: mailpit
-  annotations:
-    external-dns.custom/type: public
-spec:
-  endpoints:
-    - dnsName: mailpit.nahops.co.uk
-      recordType: CNAME
-      targets:
-        # - intgw.nahops.co.uk
-        - gw.nahops.co.uk
+# apiVersion: externaldns.k8s.io/v1alpha1
+# kind: DNSEndpoint
+# metadata:
+#   name: mailpit-private
+#   namespace: mailpit
+#   annotations:
+#     external-dns.custom/type: public
+# spec:
+#   endpoints:
+#     - dnsName: mailpit.<domain>
+#       recordType: CNAME
+#       targets:
+#         # - <ip>
+#         - <ip>
 # ---
 # apiVersion: externaldns.k8s.io/v1alpha1
 # kind: DNSEndpoint
@@ -111,10 +111,10 @@ spec:
 #     external-dns.custom/type: public
 # spec:
 #   endpoints:
-#     - dnsName: mailpit.nahops.co.uk
+#     - dnsName: mailpit.<domain>
 #       recordType: CNAME
 #       targets:
-#         - ingress.nahops.co.uk
+#         - ingress.<domain>
 #       providerSpecific:
 #         - name: external-dns.alpha.kubernetes.io/cloudflare-proxied
 #           value: "true"

@@ -115,25 +115,25 @@ spec:
 #       namespace: envoy-gateway
 #       sectionName: https
 #   hostnames:
-#     - "argocd.nahops.co.uk"
+#     - "argocd.<domain>"
 #   rules:
 #     - backendRefs:
 #         - name: argocd-server
 #           port: 80
----
-apiVersion: externaldns.k8s.io/v1alpha1
-kind: DNSEndpoint
-metadata:
-  name: argocd-public
-  namespace: argocd
-  annotations:
-    external-dns.custom/type: public
-spec:
-  endpoints:
-    - dnsName: argocd.nahops.co.uk
-      recordType: A
-      targets:
-        - 159.69.82.54
+# ---
+# apiVersion: externaldns.k8s.io/v1alpha1
+# kind: DNSEndpoint
+# metadata:
+#   name: argocd-public
+#   namespace: argocd
+#   annotations:
+#     external-dns.custom/type: public
+# spec:
+#   endpoints:
+#     - dnsName: argocd.<domain>
+#       recordType: A
+#       targets:
+#         - <ip>
 # ---
 ## Private Repository Secret example
 ## https://argo-cd.readthedocs.io/en/stable/user-guide/private-repositories/
@@ -165,6 +165,7 @@ spec:
           - path: kubernetes/argo/manifests/kube-system.yaml
           - path: kubernetes/argo/manifests/tailscale.yaml
           - path: kubernetes/argo/manifests/hcloud.yaml
+          - path: kubernetes/argo/manifests/gotify.yaml
         repoURL: https://github.com/mattkgwhite/home-ops.git
         revision: main
   goTemplate: true

@@ -253,39 +253,39 @@ spec:
       allowEmpty: true
       prune: true
       selfHeal: true
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: hubble
-  namespace: kube-system
-  annotations:
-    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-spec:
-  parentRefs:
-    - name: default # change me to internal
-      namespace: gateway
-      sectionName: https
-  hostnames:
-    - "hubble.nahops.co.uk"
-  rules:
-    - backendRefs:
-        - name: hubble-ui
-          port: 80
----
-apiVersion: externaldns.k8s.io/v1alpha1
-kind: DNSEndpoint
-metadata:
-  name: hubble-private
-  namespace: kube-system
-  annotations:
-    external-dns.custom/type: public
-spec:
-  endpoints:
-    - dnsName: hubble.nahops.co.uk
-      recordType: CNAME
-      targets:
-        - gw.nahops.co.uk
+# ---
+# apiVersion: gateway.networking.k8s.io/v1
+# kind: HTTPRoute
+# metadata:
+#   name: hubble
+#   namespace: kube-system
+#   annotations:
+#     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+# spec:
+#   parentRefs:
+#     - name: default # change me to internal
+#       namespace: gateway
+#       sectionName: https
+#   hostnames:
+#     - "hubble.<domain>"
+#   rules:
+#     - backendRefs:
+#         - name: hubble-ui
+#           port: 80
+# ---
+# apiVersion: externaldns.k8s.io/v1alpha1
+# kind: DNSEndpoint
+# metadata:
+#   name: hubble-private
+#   namespace: kube-system
+#   annotations:
+#     external-dns.custom/type: public
+# spec:
+#   endpoints:
+#     - dnsName: hubble.<domain>
+#       recordType: CNAME
+#       targets:
+#         - <ip>
 ---
 apiVersion: cilium.io/v2alpha1
 kind: CiliumL2AnnouncementPolicy
@@ -304,7 +304,7 @@ spec:
 #   name: pool
 # spec:
 #   blocks:
-#     - cidr: "159.69.82.54/32"
+#     - cidr: "<ip>/32"
 apiVersion: cilium.io/v2
 kind: CiliumLoadBalancerIPPool
 metadata:

@@ -34,7 +34,7 @@ metadata:
 data:
   config.yaml: |
     originRequest:
-      originServerName: cloudflared.nahops.co.uk
+      originServerName: cloudflared.<domain>
     ingress:
       - service: https://cilium-gateway-external.gateway.svc.cluster.local:443
 ---
@@ -73,7 +73,7 @@ spec:
             - name: NO_AUTOUPDATE
               value: "true"
             - name: TUNNEL_ORIGIN_SERVER_NAME
-              value: cloudflared.nahops.co.uk
+              value: cloudflared.<domain>
             - name: TUNNEL_CRED_FILE
               value: /etc/cloudflared/creds/credentials.json
             - name: TUNNEL_METRICS

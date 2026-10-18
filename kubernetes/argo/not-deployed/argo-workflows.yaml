@@ -105,7 +105,7 @@ spec:
       namespace: gateway
       sectionName: https
   hostnames:
-    - "workflow.nahops.co.uk"
+    - "workflow.<domain>"
   rules:
     - backendRefs:
         - name: argocd-server

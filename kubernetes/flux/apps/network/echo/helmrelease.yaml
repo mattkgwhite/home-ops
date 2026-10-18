@@ -84,7 +84,7 @@ spec:
             scrapeTimeout: 10s
     route:
       app:
-        hostnames: ["flux-echo.nahops.co.uk"]
+        hostnames: ["flux-echo.<domain>"]
         parentRefs:
           - name: internal
             namespace: kube-system

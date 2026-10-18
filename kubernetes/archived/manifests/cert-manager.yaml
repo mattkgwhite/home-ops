@@ -82,7 +82,7 @@ spec:
     #         key: secret-access-key
     #   selector:
     #     dnsZones:
-    #       - 'nahops.co.uk'
+    #       - '<domain>'
     - dns01:
         cloudflare:
           apiTokenSecretRef:
@@ -112,7 +112,7 @@ spec:
     #         key: secret-access-key
     #   selector:
     #     dnsZones:
-    #       - 'nahops.co.uk'
+    #       - '<domain>'
     - dns01:
         cloudflare:
           apiTokenSecretRef:

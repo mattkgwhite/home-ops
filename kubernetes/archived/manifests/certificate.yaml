@@ -13,10 +13,10 @@ spec:
   issuerRef:
     name: letsencrypt-staging
     kind: ClusterIssuer
-  commonName: 'nahops.co.uk'
+  commonName: '<domain>'
   dnsNames:
-  - 'nahops.co.uk'
-  - '*.nahops.co.uk'
+  - '<domain>'
+  - '*.<domain>'
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -28,10 +28,10 @@ spec:
   issuerRef:
     name: letsencrypt-production
     kind: ClusterIssuer
-  commonName: 'nahops.co.uk'
+  commonName: '<domain>'
   dnsNames:
-  - 'nahops.co.uk'
-  - '*.nahops.co.uk'
+  - '<domain>'
+  - '*.<domain>'
 ---
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant

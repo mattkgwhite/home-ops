@@ -63,7 +63,7 @@ metadata:
 #     external-dns.custom/type: private
 # spec:
 #   endpoints:
-#     - dnsName: intgw.nahops.co.uk
+#     - dnsName: <ip>
 #       recordType: A
 #       targets:
 #         - "192.168.2.10"
@@ -123,7 +123,7 @@ metadata:
 #     external-dns.custom/type: private
 # spec:
 #   endpoints:
-#     - dnsName: extgw.nahops.co.uk
+#     - dnsName: ext<ip>
 #       recordType: A
 #       targets:
 #         - "192.168.2.11"
@@ -141,7 +141,7 @@ spec:
   gatewayClassName: cilium
   infrastructure:
     annotations:
-      io.cilium/lb-ipam-ips: 159.69.82.54
+      io.cilium/lb-ipam-ips: <ip>
   listeners:
     - protocol: HTTP
       port: 80
@@ -177,17 +177,17 @@ spec:
             scheme: https
             statusCode: 301
           type: RequestRedirect
----
-apiVersion: externaldns.k8s.io/v1alpha1
-kind: DNSEndpoint
-metadata:
-  name: gw
-  namespace: gateway
-  annotations:
-    external-dns.custom/type: public
-spec:
-  endpoints:
-    - dnsName: gw.nahops.co.uk
-      recordType: A
-      targets:
-        - "159.69.82.54"
+# ---
+# apiVersion: externaldns.k8s.io/v1alpha1
+# kind: DNSEndpoint
+# metadata:
+#   name: gw
+#   namespace: gateway
+#   annotations:
+#     external-dns.custom/type: public
+# spec:
+#   endpoints:
+#     - dnsName: <ip>
+#       recordType: A
+#       targets:
+#         - "<ip>"
