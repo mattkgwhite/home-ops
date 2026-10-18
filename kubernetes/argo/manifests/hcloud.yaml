@@ -1,0 +1,170 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: hcloud
+  namespace: kube-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: "5m"
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: 1password
+  target:
+    name: hcloud
+    creationPolicy: Owner
+  data:
+    - secretKey: token
+      remoteRef:
+        # Replace with the 1Password item and field for a read/write Cloud API token.
+        key: hetzner-storage
+        property: hcloudapi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hcloud-csi-node
+  namespace: kube-system
+automountServiceAccountToken: false
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hcloud-csi
+  namespace: kube-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: hcloud-csi
+      app.kubernetes.io/instance: hcloud-csi
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress: []
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Kubernetes and Hetzner Cloud API endpoints.
+    - ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 6443
+    - to:
+        - ipBlock:
+            cidr: 169.254.169.254/32
+      ports:
+        - protocol: TCP
+          port: 80
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hcloud-csi
+  namespace: argocd
+spec:
+  destination:
+    namespace: kube-system
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: hcloud-csi
+    repoURL: https://charts.hetzner.cloud
+    targetRevision: 2.24.0
+    helm:
+      releaseName: hcloud-csi
+      valuesObject:
+        controller:
+          hcloudToken:
+            existingSecret:
+              name: hcloud
+              key: token
+          customReadinessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+          resources:
+            csiAttacher:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi
+            csiResizer:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi
+            csiProvisioner:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi
+            livenessProbe:
+              requests:
+                cpu: 10m
+                memory: 16Mi
+              limits:
+                cpu: 100m
+                memory: 64Mi
+            hcloudCSIDriver:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                cpu: 200m
+                memory: 128Mi
+        node:
+          serviceAccountName: hcloud-csi-node
+          customReadinessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+          resources:
+            csiNodeDriverRegistrar:
+              requests:
+                cpu: 10m
+                memory: 16Mi
+              limits:
+                cpu: 100m
+                memory: 64Mi
+            livenessProbe:
+              requests:
+                cpu: 10m
+                memory: 16Mi
+              limits:
+                cpu: 100m
+                memory: 64Mi
+            hcloudCSIDriver:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                cpu: 200m
+                memory: 128Mi
+        storageClasses:
+          - name: hcloud-volumes
+            defaultStorageClass: false
+            reclaimPolicy: Retain
+  syncPolicy:
+    automated:
+      allowEmpty: false
+      prune: true
+      selfHeal: true
