@@ -114,8 +114,33 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  name: hubble-tailscale
+  namespace: kube-system
+  annotations:
+    tailscale.com/hostname: hubble
+spec:
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - hubble
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hubble-ui
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
   name: gotify-tailscale
   namespace: gotify
+  annotations:
+    tailscale.com/hostname: gotify
 spec:
   ingressClassName: tailscale
   tls:
@@ -130,4 +155,4 @@ spec:
               service:
                 name: gotify
                 port:
-                  number: 8080
+                  number: 80
