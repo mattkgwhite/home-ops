@@ -120,9 +120,9 @@ spec:
   data:
     - secretKey: username
       remoteRef:
-        key: hetzner-storagebox
+        key: hetzner-storage
         property: username
     - secretKey: password
       remoteRef:
-        key: hetzner-storagebox
+        key: hetzner-storage
         property: password
