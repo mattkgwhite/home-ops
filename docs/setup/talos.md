@@ -122,6 +122,29 @@ Keep UDP `4789` allowed between the node public addresses. Cilium's default VXLA
 
 References: [Flannel VXLAN backend](https://github.com/flannel-io/flannel/blob/master/Documentation/backends.md), [Cilium routing modes and default tunnel ports](https://docs.cilium.io/en/stable/network/concepts/routing/), [Hetzner firewall behavior](https://docs.hetzner.com/cloud/firewalls/faq/).
 
+### Hetzner Cloud instance metadata
+
+Hetzner Cloud exposes its instance metadata service at the link-local address `169.254.169.254`. The CSI driver uses metadata to discover the server it runs on, including its instance ID. The `169.254.169.254/32` CIDR matches that single destination address.
+
+| Destination | Protocol | Destination port | Purpose |
+|---|---|---|---|
+| `169.254.169.254/32` | TCP | `80` | Hetzner Cloud instance metadata over HTTP |
+
+When restricting CSI pod egress, include this rule under the NetworkPolicy's `spec.egress`, as in [the hcloud CSI manifest](../../kubernetes/argo/manifests/hcloud.yaml):
+
+```yaml
+- to:
+    - ipBlock:
+        cidr: 169.254.169.254/32
+  ports:
+    - protocol: TCP
+      port: 80
+```
+
+The instance ID endpoint is `http://169.254.169.254/hetzner/v1/metadata/instance-id`. This egress allowance permits metadata discovery; it does not create a route or provide the Cloud API token.
+
+Reference: [Hetzner Cloud server metadata](https://docs.hetzner.cloud/reference/cloud#server-metadata).
+
 ### Resolver files and firewalls
 
 Keep CoreDNS's explicit upstreams (`forward . 8.8.8.8 8.8.4.4`). `/run/systemd/resolve/resolv.conf` was a workaround for the former Ubuntu/K3s setup and must not be restored on Talos. Talos has `/etc/resolv.conf`, but its host loopback resolver cannot be used by mounting that file into an ordinary pod.
