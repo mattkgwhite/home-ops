@@ -164,6 +164,7 @@ spec:
         files:
           - path: kubernetes/argo/manifests/kube-system.yaml
           - path: kubernetes/argo/manifests/tailscale.yaml
+          - path: kubernetes/argo/manifests/hcloud.yaml
         repoURL: https://github.com/mattkgwhite/home-ops.git
         revision: main
   goTemplate: true
