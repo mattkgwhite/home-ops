@@ -45,3 +45,6 @@ Thumbs.db
 talosconfig
 controlplane.yaml
 worker.yaml
+*-backup*
+machine-config.yaml
+omni-access-patch.yaml
