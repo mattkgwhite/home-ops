@@ -142,13 +142,13 @@ metadata:
   labels:
     tailscale.com/proxy-class: vaultwarden-proxy
   annotations:
-    tailscale.com/hostname: vault-warden
+    tailscale.com/hostname: warden
     tailscale.com/funnel: "false"
 spec:
   ingressClassName: tailscale
   tls:
     - hosts:
-        - vault-warden
+        - warden
   rules:
     - http:
         paths:
