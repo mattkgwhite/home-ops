@@ -156,3 +156,26 @@ spec:
                 name: gotify
                 port:
                   number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bitwarden-tailscale
+  namespace: bitwarden
+  annotations:
+    tailscale.com/hostname: bitwarden
+spec:
+  ingressClassName: tailscale
+  tls:
+    - hosts: 
+        - bitwarden
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bitwarden
+                port:
+                  number: 80
