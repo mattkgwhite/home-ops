@@ -71,7 +71,7 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
-      - image: vaultwarden/server:1.37.1
+      - image: vaultwarden/server:1.37.4
         name: vault-warden
         env:
         - name: ROCKET_PORT
