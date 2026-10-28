@@ -30,17 +30,45 @@ metadata:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: vaultwarden-data
+  name: vaultwarden-files
   namespace: vaultwarden
   annotations:
     argocd.argoproj.io/sync-options: Prune=false
 spec:
-  storageClassName: hcloud-volumes
+  storageClassName: hetzner-storagebox
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
+      storage: 1Gi
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: vaultwarden-postgres
+  namespace: vaultwarden
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: "5m"
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: 1password
+  target:
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        DATABASE_URL: 'postgresql://{{ .username | urlquery | replace "+" "%20" }}:{{ .password | urlquery | replace "+" "%20" }}@cluster01.postgres.svc.cluster.local:5432/vaultwarden'
+  data:
+    - secretKey: username
+      remoteRef:
+        key: postgres.cluster01.vaultwarden.owner
+        property: username
+    - secretKey: password
+      remoteRef:
+        key: postgres.cluster01.vaultwarden.owner
+        property: password
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -76,8 +104,17 @@ spec:
         env:
         - name: ROCKET_PORT
           value: "8080"
-        - name: ENABLE_DB_WAL
+        # Disable signups and invitations to prevent unauthorized access.
+        # Set signups and invitations to true on initial deployment to allow the creation of account, then reset the values to true once done.
+        - name: SIGNUPS_ALLOWED
           value: "false"
+        - name: INVITATIONS_ALLOWED
+          value: "false"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: vaultwarden-postgres
+              key: DATABASE_URL
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -86,6 +123,8 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /data
+          # The SMB StorageClass mounts the share root without a per-PVC subdirectory.
+          subPath: vaultwarden
         ports:
         - name: http
           containerPort: 8080
@@ -118,7 +157,7 @@ spec:
       volumes:
       - name: data
         persistentVolumeClaim:
-          claimName: vaultwarden-data
+          claimName: vaultwarden-files
           readOnly: false
 ---
 apiVersion: v1
@@ -144,6 +183,7 @@ metadata:
   annotations:
     tailscale.com/hostname: warden
     tailscale.com/funnel: "false"
+    tailscale.com/experimental-forward-cluster-traffic-via-ingress: "true"
 spec:
   ingressClassName: tailscale
   tls:
@@ -171,3 +211,195 @@ spec:
         env:
           - name: TS_DEBUG_DISABLE_UDP_GSO
             value: "true"
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: vaultwarden-cli
+  namespace: vaultwarden
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: "5m"
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: 1password
+  target:
+    creationPolicy: Owner
+  data:
+    - secretKey: BW_HOST
+      remoteRef:
+        key: vaultwarden-cli
+        property: server_url
+    - secretKey: BW_CLIENTID
+      remoteRef:
+        key: vaultwarden-cli
+        property: BW_CLIENTID
+    - secretKey: BW_CLIENTSECRET
+      remoteRef:
+        key: vaultwarden-cli
+        property: BW_CLIENTSECRET
+    - secretKey: BW_PASSWORD
+      remoteRef:
+        key: vaultwarden-cli
+        property: BW_PASSWORD
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vaultwarden-cli
+  namespace: vaultwarden
+automountServiceAccountToken: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vaultwarden-cli
+  namespace: vaultwarden
+  labels:
+    app: vaultwarden-cli
+spec:
+  revisionHistoryLimit: 1
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vaultwarden-cli
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: vaultwarden-cli
+    spec:
+      serviceAccountName: vaultwarden-cli
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: vaultwarden-cli
+          image: ghcr.io/charlesthomas/bitwarden-cli:2026.3.0
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              if ! bw login --check --quiet; then
+                bw config server "$BW_HOST"
+                bw login --apikey --quiet --nointeraction
+              fi
+              BW_SESSION="$(bw unlock --passwordenv BW_PASSWORD --raw --nointeraction)"
+              export BW_SESSION
+              bw sync --quiet
+              exec bw serve --hostname all --port 8087
+          env:
+            - name: BW_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-cli
+                  key: BW_HOST
+            - name: BITWARDENCLI_APPDATA_DIR
+              value: /tmp/bitwarden-cli
+            - name: BW_CLIENTID
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-cli
+                  key: BW_CLIENTID
+            - name: BW_CLIENTSECRET
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-cli
+                  key: BW_CLIENTSECRET
+            - name: BW_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-cli
+                  key: BW_PASSWORD
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: http
+              containerPort: 8087
+          startupProbe:
+            tcpSocket:
+              port: http
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command:
+                - wget
+                - -q
+                - -O
+                - /dev/null
+                - --post-data=
+                - http://127.0.0.1:8087/sync?force=true
+            periodSeconds: 120
+            timeoutSeconds: 30
+            failureThreshold: 3
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+              ephemeral-storage: 128Mi
+            requests:
+              cpu: 10m
+              memory: 128Mi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vaultwarden-cli
+  namespace: vaultwarden
+spec:
+  selector:
+    app: vaultwarden-cli
+  ports:
+    - name: http
+      port: 8087
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: external-secrets-to-vaultwarden-cli
+  namespace: vaultwarden
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  podSelector:
+    matchLabels:
+      app: vaultwarden-cli
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: external-secrets
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: external-secrets
+              app.kubernetes.io/name: external-secrets
+      ports:
+        - protocol: TCP
+          port: 8087
