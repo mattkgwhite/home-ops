@@ -223,6 +223,16 @@ spec:
               - name: loop
               - name: reload
               - name: loadbalance
+          - zones:
+              - zone: ts.net
+                scheme: dns://
+            port: 53
+            plugins:
+              - name: errors
+              - name: cache
+                parameters: 30
+              - name: forward
+                parameters: ts.net 10.97.175.163
         affinity:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
