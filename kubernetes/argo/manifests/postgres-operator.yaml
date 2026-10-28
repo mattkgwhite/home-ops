@@ -1,0 +1,102 @@
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: postgres-operator
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgres-operator
+  namespace: argocd
+spec:
+  destination:
+    namespace: postgres-operator
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: postgres-operator
+    repoURL: https://opensource.zalando.com/postgres-operator/charts/postgres-operator
+    targetRevision: 1.15.1
+    helm:
+      releaseName: postgres-operator
+      valuesObject:
+        image:
+          registry: ghcr.io
+          repository: zalando/postgres-operator
+        configGeneral:
+          enable_crd_registration: false
+        configKubernetes:
+          watched_namespace: postgres
+          enable_persistent_volume_claim_deletion: false
+          storage_resize_mode: pvc
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgres-operator-ui
+  namespace: argocd
+spec:
+  destination:
+    namespace: postgres-operator
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: postgres-operator-ui
+    repoURL: https://opensource.zalando.com/postgres-operator/charts/postgres-operator-ui
+    targetRevision: 1.15.1
+    helm:
+      releaseName: postgres-operator-ui
+      valuesObject:
+        envs:
+          targetNamespace: postgres
+          operatorApiUrl: http://postgres-operator:8080
+        service:
+          type: ClusterIP
+          port: 80
+        ingress:
+          enabled: false
+        extraEnvs:
+          - name: MIN_PODS
+            value: "1"
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: postgres-operator-ui-tailscale
+  namespace: postgres-operator
+  annotations:
+    tailscale.com/hostname: postgres
+    tailscale.com/funnel: "false"
+spec:
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - postgres
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: postgres-operator-ui
+                port:
+                  number: 80
