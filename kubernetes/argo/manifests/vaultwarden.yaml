@@ -282,7 +282,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: vaultwarden-cli
-          image: ghcr.io/charlesthomas/bitwarden-cli:2026.3.0
+          image: ghcr.io/charlesthomas/bitwarden-cli:2026.10.0
           command:
             - /bin/bash
             - -ec
