@@ -1,0 +1,252 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: homarr
+  namespace: argocd
+spec:
+  destination:
+    namespace: homarr
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    repoURL: https://github.com/mattkgwhite/home-ops.git
+    targetRevision: main
+    path: kubernetes/argo/manifests
+    directory:
+      include: homarr.yaml
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: homarr
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: homarr
+  namespace: homarr
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: homarr-kubernetes-reader
+rules:
+  - apiGroups: [""]
+    resources:
+      - pods
+      - services
+      - nodes
+      - namespaces
+      - configmaps
+      - secrets
+      - persistentvolumeclaims
+    verbs: [list]
+  - apiGroups: [apps]
+    resources: [replicasets]
+    verbs: [get]
+  - apiGroups: [networking.k8s.io]
+    resources: [ingresses]
+    verbs: [list]
+  - apiGroups: [metrics.k8s.io]
+    resources: [nodes]
+    verbs: [list]
+  - nonResourceURLs: [/version]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: homarr-kubernetes-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: homarr-kubernetes-reader
+subjects:
+  - kind: ServiceAccount
+    name: homarr
+    namespace: homarr
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: homarr-encryption
+  namespace: homarr
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: "5m"
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: 1password
+  target:
+    creationPolicy: Owner
+  data:
+    - secretKey: SECRET_ENCRYPTION_KEY
+      remoteRef:
+        key: homarr-encryption
+        # Keep this 64-character hex key stable to decrypt persisted integration secrets.
+        property: homarr
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: homarr-postgres
+  namespace: homarr
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: "5m"
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: 1password
+  target:
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        # Spilo's generated certificate is self-signed; use TLS without certificate verification.
+        DB_URL: 'postgresql://{{ .username | urlquery | replace "+" "%20" }}:{{ .password | urlquery | replace "+" "%20" }}@cluster01.postgres.svc.cluster.local:5432/homarr?sslmode=no-verify'
+  data:
+    - secretKey: username
+      remoteRef:
+        key: postgres.cluster01.homarr.owner
+        property: username
+    - secretKey: password
+      remoteRef:
+        key: postgres.cluster01.homarr.owner
+        property: password
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homarr
+  namespace: homarr
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: homarr
+      app.kubernetes.io/instance: homarr
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: homarr
+        app.kubernetes.io/instance: homarr
+    spec:
+      serviceAccountName: homarr
+      automountServiceAccountToken: true
+      # Homarr starts as root to set ownership, then switches to PUID/PGID.
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: homarr
+          image: ghcr.io/homarr-labs/homarr:v2.7.0
+          env:
+            - name: TZ
+              value: Europe/London
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: SECRET_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: homarr-encryption
+                  key: SECRET_ENCRYPTION_KEY
+            - name: DB_DRIVER
+              value: node-postgres
+            - name: DB_DIALECT
+              value: postgresql
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: homarr-postgres
+                  key: DB_URL
+            - name: ENABLE_DOCKER
+              value: "false"
+            - name: ENABLE_KUBERNETES
+              value: "true"
+          securityContext:
+            allowPrivilegeEscalation: false
+          ports:
+            - name: http
+              containerPort: 7575
+          startupProbe:
+            httpGet:
+              path: /api/health/ready
+              port: http
+            failureThreshold: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /api/health/ready
+              port: http
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/health/live
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /appdata
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: homarr
+  namespace: homarr
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: homarr
+    app.kubernetes.io/instance: homarr
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: homarr-tailscale
+  namespace: homarr
+  annotations:
+    tailscale.com/hostname: homarr
+    tailscale.com/funnel: "false"
+spec:
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - homarr
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: homarr
+                port:
+                  number: 80
