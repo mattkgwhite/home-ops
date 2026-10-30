@@ -28,6 +28,7 @@ spec:
           repository: zalando/postgres-operator
         configGeneral:
           enable_crd_registration: false
+          kubernetes_use_configmaps: false
         configKubernetes:
           watched_namespace: postgres
           enable_persistent_volume_claim_deletion: false
