@@ -162,17 +162,22 @@ spec:
   generators:
     - git:
         files:
-          - path: kubernetes/argo/manifests/kube-system.yaml
-          - path: kubernetes/argo/manifests/tailscale.yaml
-          - path: kubernetes/argo/manifests/hcloud.yaml
-          - path: kubernetes/argo/manifests/storage.yaml
-          - path: kubernetes/argo/manifests/gotify.yaml
-          - path: kubernetes/argo/manifests/reloader.yaml
-          - path: kubernetes/argo/manifests/postgres-operator.yaml
-          - path: kubernetes/argo/manifests/postgres.yaml
+          - path: kubernetes/argo/manifests/cert-manager.yaml
+          - path: kubernetes/argo/manifests/crossplane.yaml
+          - path: kubernetes/argo/manifests/crossplane-providers.yaml
+          - path: kubernetes/argo/manifests/crossplane-cloudflare.yaml
+          - path: kubernetes/argo/manifests/crossplane-kubernetes.yaml
+          - path: kubernetes/argo/manifests/crossplane-terraform.yaml
           - path: kubernetes/argo/manifests/external-dns.yaml
           - path: kubernetes/argo/manifests/external-secrets.yaml
-          - path: kubernetes/argo/manifests/cert-manager.yaml
+          - path: kubernetes/argo/manifests/gotify.yaml
+          - path: kubernetes/argo/manifests/hcloud.yaml
+          - path: kubernetes/argo/manifests/kube-system.yaml
+          - path: kubernetes/argo/manifests/postgres.yaml
+          - path: kubernetes/argo/manifests/postgres-operator.yaml
+          - path: kubernetes/argo/manifests/reloader.yaml
+          - path: kubernetes/argo/manifests/storage.yaml
+          - path: kubernetes/argo/manifests/tailscale.yaml
           # removed due to configuration conflicts that need to be resolved.
           # configuration ownership needs to be amended to allow for argocd's management.
           # - path: kubernetes/argo/manifests/metube.yaml
