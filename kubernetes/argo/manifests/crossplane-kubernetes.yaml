@@ -2,7 +2,7 @@
 apiVersion: pkg.crossplane.io/v1beta1
 kind: DeploymentRuntimeConfig
 metadata:
-  name: provider-kubernetes
+  name: k8s-config
 spec:
   serviceAccountTemplate:
     metadata:
