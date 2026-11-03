@@ -20,6 +20,13 @@ spec:
     storageClass: hcloud-volumes
   numberOfInstances: 1
   preparedDatabases:
+    authelia:
+      defaultUsers: true
+      extensions: {}
+      schemas:
+        public:
+          defaultRoles: false
+          defaultUsers: false
     homarr:
       defaultUsers: true
       extensions: {}

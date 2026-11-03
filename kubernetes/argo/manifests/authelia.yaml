@@ -1,0 +1,278 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: authelia.manifest
+  namespace: argocd
+spec:
+  destination:
+    namespace: authelia
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    repoURL: https://github.com/mattkgwhite/home-ops.git
+    targetRevision: main
+    path: kubernetes/argo/manifests
+    directory:
+      include: authelia.yaml
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: authelia
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: cluster01.authelia.owner
+  namespace: postgres
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: "5m"
+  secretStoreRefs:
+    - name: 1password
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: authelia-owner-user.cluster01.credentials.postgresql.acid.zalan.do
+  data:
+    - match:
+        secretKey: username
+        remoteRef:
+          remoteKey: postgres.cluster01.authelia.owner
+          property: username
+    - match:
+        secretKey: password
+        remoteRef:
+          remoteKey: postgres.cluster01.authelia.owner
+          property: password
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: authelia-config
+  namespace: authelia
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: "5m"
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: 1password
+  target:
+    creationPolicy: Owner
+  data:
+    - secretKey: session.encryption.key
+      remoteRef:
+        key: authelia
+        property: session_secret
+    - secretKey: storage.encryption.key
+      remoteRef:
+        key: authelia
+        property: storage_encryption_key
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: authelia-users
+  namespace: authelia
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: "5m"
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: 1password
+  target:
+    creationPolicy: Owner
+  data:
+    - secretKey: users_database.yml
+      remoteRef:
+        key: authelia
+        property: users_database
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: authelia-postgres
+  namespace: authelia
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: "5m"
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: 1password
+  target:
+    creationPolicy: Owner
+  data:
+    - secretKey: username
+      remoteRef:
+        key: postgres.cluster01.authelia.owner
+        property: username
+    - secretKey: password
+      remoteRef:
+        key: postgres.cluster01.authelia.owner
+        property: password
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: authelia
+  namespace: argocd
+spec:
+  destination:
+    namespace: authelia
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: authelia
+    repoURL: https://charts.authelia.com
+    targetRevision: 0.11.22
+    helm:
+      releaseName: authelia
+      valuesObject:
+        image:
+          tag: 4.39.28
+        rbac:
+          enabled: true
+        pod:
+          kind: Deployment
+          replicas: 1
+          # In-memory sessions must not be split across overlapping replicas.
+          strategy:
+            type: Recreate
+          enableServiceLinks: false
+          annotations:
+            reloader.stakater.com/auto: "true"
+          securityContext:
+            pod:
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+              fsGroup: 1000
+              seccompProfile:
+                type: RuntimeDefault
+            container:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop:
+                  - ALL
+          env:
+            - name: AUTHELIA_STORAGE_POSTGRES_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: authelia-postgres
+                  key: username
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+        service:
+          type: ClusterIP
+          port: 80
+        ingress:
+          enabled: false
+        persistence:
+          enabled: false
+        secret:
+          existingSecret: authelia-config
+          additionalSecrets:
+            authelia-users: {}
+            authelia-postgres: {}
+        configMap:
+          theme: auto
+          default_2fa_method: totp
+          server:
+            endpoints:
+              automatic_authz_implementations:
+                - ExtAuthz
+          identity_validation:
+            reset_password:
+              secret:
+                disabled: true
+          authentication_backend:
+            # The projected Secret is read-only; manage passwords in 1Password.
+            password_reset:
+              disable: true
+            password_change:
+              disable: true
+            file:
+              enabled: true
+              path: /secrets/authelia-users/users_database.yml
+              password:
+                argon2:
+                  memory: 65536
+          totp:
+            disable: false
+          webauthn:
+            disable: false
+          access_control:
+            default_policy: deny
+            rules:
+              - domain: auth.rat-shilling.ts.net
+                policy: two_factor
+          session:
+            cookies:
+              - domain: auth.rat-shilling.ts.net
+                subdomain: ""
+            redis:
+              enabled: false
+              deploy: false
+          storage:
+            postgres:
+              enabled: true
+              deploy: false
+              address: tcp://cluster01.postgres.svc.cluster.local:5432
+              database: authelia
+              schema: public
+              password:
+                secret_name: authelia-postgres
+                path: password
+              tls:
+                enabled: true
+                # Spilo's generated certificate is self-signed.
+                skip_verify: true
+          notifier:
+            # Evaluation only: retrieve enrollment messages privately via kubectl.
+            filesystem:
+              enabled: true
+              filename: /config/notification.txt
+            smtp:
+              enabled: false
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: authelia-tailscale
+  namespace: authelia
+  annotations:
+    tailscale.com/hostname: auth
+    tailscale.com/funnel: "false"
+spec:
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - auth
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: authelia
+                port:
+                  number: 80
