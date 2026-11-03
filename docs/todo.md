@@ -7,14 +7,16 @@
 - [X] Ingress - Gateway API
 - [X] Storage
   - [X] Hetzner Storage Box
-  - [X] Local Storage on VM / VPS
+  - [X] Hetzner Cloud Volumes - CSI
+  - [ ] RustFS / Seaweed / Garage
+    - [ ] Review RustFS / Seaweed / Garage
 - [ ] Monitoring & Alerting
   - [ ] Kube-Prometheus-Stack - No Grafana
   - [ ] Grafana
 - [ ] Security
-  - [ ] SSO - Authentik
+  - [ ] SSO / MFA - Authelia
 - [ ] Database
-  - [ ] Centralised Cluster / Operator
+  - [ ] Centralised Cluster / Operator - Postgres
 - [ ] CI / CD
   - [ ] Argo Workflows
   - [ ] Argo Events
@@ -24,7 +26,6 @@
   - [ ] Cloudflared
 - [ ] Terraform
   - [ ] tf-workspace
-  - [ ] Authentik integration
 - [ ] Backups
   - [ ] Scheduled / Automated
   - [ ] External Backups
@@ -32,8 +33,3 @@
   - [ ] Ansible
   - [ ] Taskfile
   - [ ] Documentation
-
-## Additional Configuration
-
-- [ ] FluxCD
-  - Currently Pending.
