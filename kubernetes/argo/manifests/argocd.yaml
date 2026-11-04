@@ -169,6 +169,7 @@ spec:
           - path: kubernetes/argo/manifests/gotify.yaml
           - path: kubernetes/argo/manifests/hcloud.yaml
           - path: kubernetes/argo/manifests/kube-system.yaml
+          - path: kubernetes/argo/manifests/monitoring.yaml
           - path: kubernetes/argo/manifests/postgres.yaml
           - path: kubernetes/argo/manifests/postgres-operator.yaml
           - path: kubernetes/argo/manifests/reloader.yaml
