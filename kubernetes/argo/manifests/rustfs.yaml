@@ -1,0 +1,257 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rustfs
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: rustfs-credentials
+  namespace: rustfs
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: 1password
+  target:
+    creationPolicy: Owner
+  data:
+    - secretKey: RUSTFS_ACCESS_KEY
+      remoteRef:
+        key: rustfs
+        property: access_key
+    - secretKey: RUSTFS_SECRET_KEY
+      remoteRef:
+        key: rustfs
+        property: secret_key
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rustfs-data
+  namespace: rustfs
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  storageClassName: hcloud-volumes
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi # this was originally was 20Gi before i've manually updated it to 10Gi
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: rustfs-container-defaults
+  namespace: rustfs
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  limits:
+    # The upstream chart does not expose resources for its init container.
+    - type: Container
+      defaultRequest:
+        cpu: 10m
+        memory: 16Mi
+      default:
+        cpu: 100m
+        memory: 64Mi
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rustfs
+  namespace: argocd
+spec:
+  destination:
+    namespace: rustfs
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    repoURL: https://github.com/rustfs/rustfs.git
+    # RustFS 1.0.4; the bundled chart's appVersion is older than the release.
+    targetRevision: 46337942d55f3a8e6a97b147ca98d9ea8115555d
+    path: helm/rustfs
+    helm:
+      releaseName: rustfs
+      skipTests: true
+      valuesObject:
+        fullnameOverride: rustfs
+        replicaCount: 1
+        mode:
+          standalone:
+            enabled: true
+            strategy:
+              type: Recreate
+            existingClaim:
+              dataClaim: rustfs-data
+          distributed:
+            enabled: false
+        image:
+          rustfs:
+            tag: 1.0.4
+          initImage:
+            tag: 1.37.0
+        secret:
+          existingSecret: rustfs-credentials
+        config:
+          rustfs:
+            console_enable: "true"
+            obs_log_directory: ""
+            obs_environment: production
+            log_level: info
+        serviceAccount:
+          create: true
+          automount: false
+        podSecurityContext:
+          runAsNonRoot: true
+          runAsUser: 10001
+          runAsGroup: 10001
+          fsGroup: 10001
+          seccompProfile:
+            type: RuntimeDefault
+        containerSecurityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: "2"
+            memory: 2Gi
+        extraVolumes:
+          - name: tmp
+            emptyDir:
+              sizeLimit: 64Mi
+        extraVolumeMounts:
+          - name: tmp
+            mountPath: /tmp
+        service:
+          type: ClusterIP
+        ingress:
+          enabled: false
+        livenessProbe:
+          enabled: true
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 6
+        readinessProbe:
+          enabled: true
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+  syncPolicy:
+    automated:
+      allowEmpty: false
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rustfs-console-tailscale
+  namespace: rustfs
+  annotations:
+    tailscale.com/hostname: rustfs
+    tailscale.com/funnel: "false"
+spec:
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - rustfs
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rustfs-svc
+                port:
+                  number: 9001
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rustfs-s3-tailscale
+  namespace: rustfs
+  annotations:
+    tailscale.com/hostname: rusts3
+    tailscale.com/funnel: "false"
+spec:
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - rustfs-s3
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rustfs-svc
+                port:
+                  number: 9000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rustfs
+  namespace: rustfs
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: rustfs
+      app.kubernetes.io/instance: rustfs
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: tailscale
+      ports:
+        - protocol: TCP
+          port: 9000
+        - protocol: TCP
+          port: 9001
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 9000
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

@@ -172,6 +172,7 @@ spec:
           - path: kubernetes/argo/manifests/postgres.yaml
           - path: kubernetes/argo/manifests/postgres-operator.yaml
           - path: kubernetes/argo/manifests/reloader.yaml
+          - path: kubernetes/argo/manifests/rustfs.yaml
           - path: kubernetes/argo/manifests/storage.yaml
           - path: kubernetes/argo/manifests/tailscale.yaml
           # removed due to configuration conflicts that need to be resolved.
