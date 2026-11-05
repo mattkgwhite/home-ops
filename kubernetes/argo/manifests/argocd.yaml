@@ -44,13 +44,36 @@ spec:
     targetRevision: 10.11.7
     helm:
       valuesObject:
+        controller:
+          resources:
+            requests:
+              cpu: 250m
+              memory: 768Mi
+            limits:
+              memory: 1Gi
+          env:
+            - name: GOMEMLIMIT
+              value: "850MiB"
         configs:
+          cm:
+            timeout.reconciliation: 300s
+            timeout.reconciliation.jitter: 0s
           params:
             server.insecure: true
+            reposerver.parallelism.limit: 1
           rbac:
             policy.csv: |
               g, ArgoCD Admin, role:admin
         repoServer:
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          env:
+            - name: GOMEMLIMIT
+              value: "400MiB"
           rbac:
             - apiGroups: [""]
               resources: ["secrets"]
@@ -82,9 +105,8 @@ spec:
       allowEmpty: true
       prune: true
       selfHeal: true
-    # syncOptions:
-    # - serversideApply=true
-    # - force-conflicts=true
+    syncOptions:
+      - ServerSideApply=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
@@ -161,6 +183,7 @@ metadata:
 spec:
   generators:
     - git:
+        requeueAfterSeconds: 300
         files:
           - path: kubernetes/argo/manifests/cert-manager.yaml
           - path: kubernetes/argo/manifests/crossplane.yaml
