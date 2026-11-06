@@ -98,7 +98,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: metube
-          image: ghcr.io/alexta69/metube:2026.11.01
+          image: ghcr.io/alexta69/metube:2026.11.06
           env:
             - name: TZ
               value: Europe/London
