@@ -8,15 +8,16 @@
 - [X] Storage
   - [X] Hetzner Storage Box
   - [X] Hetzner Cloud Volumes - CSI
-  - [ ] RustFS / Seaweed / Garage
-    - [ ] Review RustFS / Seaweed / Garage
-- [ ] Monitoring & Alerting
-  - [ ] Kube-Prometheus-Stack - No Grafana
-  - [ ] Grafana
+  - [X] RustFS / Seaweed / Garage
+    - [X] Review RustFS / Seaweed / Garage
+      - [X] RustFS seems to be the more mature option, from the websites etc.
+- [X] Monitoring & Alerting
+  - [X] Kube-Prometheus-Stack - No Grafana
+  - [X] Grafana - deployed separately
 - [ ] Security
   - [ ] SSO / MFA - Authelia
-- [ ] Database
-  - [ ] Centralised Cluster / Operator - Postgres
+- [X] Database
+  - [X] Centralised Cluster / Operator - Postgres
 - [ ] CI / CD
   - [ ] Argo Workflows
   - [ ] Argo Events
@@ -32,4 +33,5 @@
 - [ ] Automation
   - [ ] Ansible
   - [ ] Taskfile
-  - [ ] Documentation
+- [ ] Documentation
+  - [ ] Full Documentation
