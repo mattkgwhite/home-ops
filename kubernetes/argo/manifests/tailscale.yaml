@@ -43,6 +43,19 @@ metadata:
 spec:
   type: ingress
 ---
+apiVersion: tailscale.com/v1alpha1
+kind: Connector
+metadata:
+  name: tailscale-exit-node
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  replicas: 1
+  hostname: homelab-exit-node
+  tags:
+    - tag:k8s
+  exitNode: true
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
