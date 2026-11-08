@@ -97,7 +97,7 @@ spec:
   source:
     chart: grafana
     repoURL: https://grafana.github.io/helm-charts
-    targetRevision: 8.10.4
+    targetRevision: 10.5.15
     helm:
       releaseName: grafana
       valuesObject:
@@ -190,7 +190,7 @@ spec:
   source:
     chart: kube-prometheus-stack
     repoURL: https://prometheus-community.github.io/helm-charts
-    targetRevision: 70.1.1
+    targetRevision: 93.0.0
     helm:
       releaseName: kube-prometheus-stack
       valuesObject:
@@ -253,7 +253,7 @@ spec:
   source:
     chart: loki
     repoURL: https://grafana.github.io/helm-charts
-    targetRevision: 6.28.0
+    targetRevision: 7.5.0
     helm:
       releaseName: loki
       valuesObject:
@@ -318,7 +318,7 @@ spec:
   source:
     chart: fluent-bit
     repoURL: https://fluent.github.io/helm-charts
-    targetRevision: 0.48.9
+    targetRevision: 0.58.3
     helm:
       valuesObject:
         config:
