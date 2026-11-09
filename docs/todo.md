@@ -18,6 +18,10 @@
   - [ ] SSO / MFA - Authelia
 - [X] Database
   - [X] Centralised Cluster / Operator - Postgres
+- [X] - Git / Source Control
+  - [ ] - Forgejo
+- Automation
+  - [ ] - N8N
 - [ ] CI / CD
   - [ ] Argo Workflows
   - [ ] Argo Events
