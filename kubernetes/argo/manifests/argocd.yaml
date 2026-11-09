@@ -189,6 +189,7 @@ spec:
           - path: kubernetes/argo/manifests/crossplane.yaml
           - path: kubernetes/argo/manifests/external-dns.yaml
           - path: kubernetes/argo/manifests/external-secrets.yaml
+          - path: kubernetes/argo/manifests/glance.yaml
           - path: kubernetes/argo/manifests/gotify.yaml
           - path: kubernetes/argo/manifests/hcloud.yaml
           - path: kubernetes/argo/manifests/kube-system.yaml
