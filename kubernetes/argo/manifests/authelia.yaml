@@ -243,12 +243,16 @@ spec:
                 # Spilo's generated certificate is self-signed.
                 skip_verify: true
           notifier:
-            # Evaluation only: retrieve enrollment messages privately via kubectl.
             filesystem:
-              enabled: true
-              filename: /config/notification.txt
-            smtp:
               enabled: false
+            smtp:
+              enabled: true
+              address: smtp://mailpit.mailpit.svc.cluster.local:1025
+              sender: Authelia <authelia@example.invalid>
+              # Mailpit captures mail over plain SMTP inside the cluster for evaluation.
+              disable_require_tls: true
+              password:
+                disabled: true
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
