@@ -219,11 +219,11 @@ spec:
           access_control:
             default_policy: deny
             rules:
-              - domain: auth.rat-shilling.ts.net
+              - domain: sso.rat-shilling.ts.net
                 policy: two_factor
           session:
             cookies:
-              - domain: auth.rat-shilling.ts.net
+              - domain: sso.rat-shilling.ts.net
                 subdomain: ""
             redis:
               enabled: false
@@ -263,13 +263,13 @@ metadata:
   name: authelia-tailscale
   namespace: authelia
   annotations:
-    tailscale.com/hostname: auth
+    tailscale.com/hostname: sso
     tailscale.com/funnel: "false"
 spec:
   ingressClassName: tailscale
   tls:
     - hosts:
-        - auth
+        - sso
   rules:
     - http:
         paths:

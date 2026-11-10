@@ -7,7 +7,7 @@ to provision the configured volumes.
 
 ## Access and credentials
 
-Grafana is exposed privately at `https://grafana.rat-shilling.ts.net/` through
+Grafana is exposed privately at `https://grafana.<tailnet>/` through
 Tailscale Ingress, with Funnel disabled. The Ingress address after reconciliation
 is authoritative. Prometheus, Alertmanager, and Loki remain internal services;
 Grafana queries their cluster endpoints.

@@ -23,7 +23,7 @@ Database connections use TLS with certificate verification disabled to match the
 
 Authelia's current stable release provides a login and MFA enrollment portal, not a user-administration console. `administration.enable_ui` appears in a [proposed administrator-console design](https://www.authelia.com/roadmap/active/dashboard-control-panel-and-cli-for-admins/) and is not a supported setting in this configuration. User accounts are managed in the 1Password-backed user file. A future console or directory migration must preserve one authoritative user store.
 
-Enrollment and account-verification messages are sent to the existing Mailpit Service at `smtp://mailpit.mailpit.svc.cluster.local:1025`. Open the private [Mailpit inbox](https://mailpit.rat-shilling.ts.net/) while connected to the tailnet to read them. The inbox URL serves the web UI; Authelia uses the internal SMTP endpoint to submit messages. Mailpit captures mail rather than delivering it to external inboxes.
+Enrollment and account-verification messages are sent to the existing Mailpit Service at `smtp://mailpit.mailpit.svc.cluster.local:1025`. Open the private [Mailpit inbox](https://mailpit.<tailnet>/) while connected to the tailnet to read them. The inbox URL serves the web UI; Authelia uses the internal SMTP endpoint to submit messages. Mailpit captures mail rather than delivering it to external inboxes.
 
 Mailpit uses plain SMTP without credentials for this evaluation. Authelia's SMTP password Secret is disabled, so no SMTP credentials need to be added to 1Password. The `disable_require_tls` exception permits this unencrypted internal connection; Authelia discourages it for production. Use a trusted TLS SMTP service before relying on this configuration for public services. See [Authelia SMTP settings](https://www.authelia.com/configuration/notifications/smtp/) and [Mailpit SMTP configuration](https://mailpit.axllent.org/docs/configuration/smtp/).
 
@@ -112,7 +112,7 @@ These steps change the live cluster and are provided for a later deployment. Non
 
    The provisioned hostname must match the session cookie configuration. Resolve any Tailscale name collision before testing authentication.
 
-8. Open the portal while connected to the tailnet. Sign in, request enrollment, and open the [Mailpit inbox](https://mailpit.rat-shilling.ts.net/). Find the newly captured Authelia message addressed to the email configured for your user. Follow that message's instructions and enroll TOTP. WebAuthn is also enabled; enroll a separate authenticator as a recovery option. No notification or credential contents should be added to this repository.
+8. Open the portal while connected to the tailnet. Sign in, request enrollment, and open the [Mailpit inbox](https://mailpit.<tailnet>/). Find the newly captured Authelia message addressed to the email configured for your user. Follow that message's instructions and enroll TOTP. WebAuthn is also enabled; enroll a separate authenticator as a recovery option. No notification or credential contents should be added to this repository.
 
 9. Test sign-in and MFA, then confirm that the portal is unreachable from a device outside the tailnet. Check the private hostname's TLS certificate and verify the lack of public exposure against the actual network configuration.
 
@@ -123,6 +123,14 @@ These steps change the live cluster and are provided for a later deployment. Non
 After the reviewed notifier change is available on `main`, sync `authelia.manifest` first to update the child Application's Helm values, then sync `authelia` to regenerate the configuration and restart the pod. The restart clears the current in-memory login session.
 
 Request a fresh enrollment or verification message after the rollout, then check Mailpit. Existing file-notifier messages are not imported. The SMTP startup check tests connectivity and recipient acceptance without sending a message, so successful startup alone does not populate the inbox.
+
+### Changing the portal hostname
+
+The portal hostname is `sso.<tailnet>`. When renaming it, update all four references in the Authelia manifest: the Tailscale hostname annotation, the Ingress TLS host, the portal access-control rule, and the session cookie domain. The chart builds `authelia_url` from the cookie domain and its `subdomain` value, which is empty for this host-only cookie.
+
+Changing only the Ingress can load the login page while breaking `/api/state`. On 2026-11-10, the new `sso` Ingress was working but Authelia still used the old `auth` cookie domain. Its logs reported `no configured session cookie domain matches the url`, and the browser displayed `There was an issue retrieving the current user state`.
+
+After the corrected configuration is available on `main`, sync `authelia.manifest` and then `authelia`. Confirm the rollout and that the rendered cookie domain and `authelia_url` match the published Ingress hostname. Reopen the portal in a fresh browser session and sign in again.
 
 ### Recovering a password
 
