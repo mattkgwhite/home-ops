@@ -63,29 +63,29 @@ spec:
           name: mailpit
           image: ghcr.io/axllent/mailpit:v1.33.0
 ---
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: mailpit
+  name: mailpit-tailscale
   namespace: mailpit
+  annotations:
+    tailscale.com/hostname: mailpit
+    tailscale.com/funnel: "false"
 spec:
-  parentRefs:
-    - name: internal
-      namespace: gateway
-      sectionName: https
-    # - name: external
-    #   namespace: gateway
-    #   sectionName: https
-  hostnames:
-    - "mailpit.<domain>"
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - mailpit
   rules:
-    # - matches:
-    #     - path:
-    #         type: PathPrefix
-    #         value: /
-    - backendRefs:
-        - name: mailpit
-          port: 8025
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mailpit
+                port:
+                  number: 8025
 # ---
 # apiVersion: externaldns.k8s.io/v1alpha1
 # kind: DNSEndpoint
