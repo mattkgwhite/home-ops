@@ -135,6 +135,7 @@ spec:
           GF_DATABASE_SSL_MODE: require
           GF_AUTH_GENERIC_OAUTH_ENABLED: "false"
           GF_AUTH_DISABLE_LOGIN_FORM: "false"
+          GF_SERVER_ENABLE_GZIP: "true" # enabled specifically to speed up dashboard loading
         envValueFrom:
           GF_DATABASE_USER:
             secretKeyRef:
