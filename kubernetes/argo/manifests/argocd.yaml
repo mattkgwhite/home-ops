@@ -186,7 +186,7 @@ spec:
         requeueAfterSeconds: 300
         files:
           - path: kubernetes/argo/manifests/cert-manager.yaml
-          - path: kubernetes/argo/manifests/crossplane.yaml
+          # - path: kubernetes/argo/manifests/crossplane.yaml # disabled due to not being used right now.
           - path: kubernetes/argo/manifests/external-dns.yaml
           - path: kubernetes/argo/manifests/external-secrets.yaml
           - path: kubernetes/argo/manifests/glance.yaml
