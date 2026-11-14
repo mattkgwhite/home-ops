@@ -7,6 +7,32 @@
 | Athena | VPS - Worker | 8c/16GB /w 160GB |
 | Electra | VPS - Control Plane | 2c/4GB /w 40GB |
 
+## Workloads pinned to Athena
+
+The `olumpus` cluster pins the following workloads to Athena. Their Argo CD Helm values set `kubernetes.io/hostname` to `talos-oc7-jd1` under `nodeSelector`. The rollout was verified on 2026-11-14. It moved Argo CD reconciliation and External Secrets processing off Electra (`talos-iwd-lqp`) to free memory for the control plane.
+
+| Namespace | Kind | Workload | GitOps manifest and Helm value |
+|---|---|---|---|
+| `argocd` | StatefulSet | `argocd-application-controller` | [argocd.yaml](../../kubernetes/argo/manifests/argocd.yaml), `controller.nodeSelector` |
+| `argocd` | Deployment | `argocd-repo-server` | [argocd.yaml](../../kubernetes/argo/manifests/argocd.yaml), `repoServer.nodeSelector` |
+| `external-secrets` | Deployment | `external-secrets` | [external-secrets.yaml](../../kubernetes/argo/manifests/external-secrets.yaml), `global.nodeSelector` |
+| `external-secrets` | Deployment | `external-secrets-cert-controller` | [external-secrets.yaml](../../kubernetes/argo/manifests/external-secrets.yaml), `global.nodeSelector` |
+| `external-secrets` | Deployment | `external-secrets-webhook` | [external-secrets.yaml](../../kubernetes/argo/manifests/external-secrets.yaml), `global.nodeSelector` |
+
+The External Secrets Helm values also set `global.tolerations: []` to clear the previous control-plane toleration. The operator on Athena handles secret refreshes for Authelia, 1Password Connect, and Vaultwarden. Argo CD and External Secrets still depend on the Kubernetes API on Electra. If Athena is unavailable, these five workloads need a selector change before they can schedule on another node.
+
+### Verify placement and sync
+
+```zsh
+mise x -- kubectl -n argocd get pods \
+  -l 'app.kubernetes.io/name in (argocd-application-controller,argocd-repo-server)' -o wide
+mise x -- kubectl -n external-secrets get pods -o wide
+mise x -- kubectl -n argocd get applications argocd external-secrets
+mise x -- kubectl get externalsecrets -A
+```
+
+The five pods should be ready with `talos-oc7-jd1` in the `NODE` column. Both Applications should show `Synced` and `Healthy`. Check that periodic ExternalSecrets report `Ready=True` and continue to refresh on schedule.
+
 ## Cluster networking
 
 The live `olumpus` configuration was checked on 2026-10-17:
