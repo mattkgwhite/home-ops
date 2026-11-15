@@ -20,22 +20,29 @@
   - [X] Centralised Cluster / Operator - Postgres
 - [X] - Git / Source Control
   - [ ] - Forgejo
-- Automation
+- [ ] Documentation
+  - [ ] Full Documentation
+  - [ ] WikiJS? - or an alternative?
+  - [ ] Excalidraw - Documentation drawings or an alternative
+- [ ] Management
+  - [ ] Vikunja - ToDo List
+- [ ] Automation
   - [ ] - N8N
-- [ ] CI / CD
-  - [ ] Argo Workflows
-  - [ ] Argo Events
-  - [ ] Argo Rollouts
-  - [ ] Argo Image Updater
+  - [ ] - Kestra
 - [ ] External Access
   - [ ] Cloudflared
-- [ ] Terraform
-  - [ ] tf-workspace
+- [X] Terraform
+  - [X] tf-workspace via Control-plane
 - [ ] Backups
   - [ ] Scheduled / Automated
   - [ ] External Backups
 - [ ] Automation
   - [ ] Ansible
   - [ ] Taskfile
-- [ ] Documentation
-  - [ ] Full Documentation
+- [ ] Security
+  - [ ] Vault
+- [ ] CI / CD
+  - [ ] Argo Workflows
+  - [ ] Argo Events
+  - [ ] Argo Rollouts
+  - [ ] Argo Image Updater
