@@ -20,6 +20,20 @@ spec:
     storageClass: hcloud-volumes
   numberOfInstances: 1
   preparedDatabases:
+    forgejo:
+      defaultUsers: true
+      extensions: {}
+      schemas:
+        public:
+          defaultRoles: false
+          defaultUsers: false
+    n8n:
+      defaultUsers: true
+      extensions: {}
+      schemas:
+        public:
+          defaultRoles: false
+          defaultUsers: false
     grafana:
       defaultUsers: true
       extensions: {}
@@ -60,6 +74,33 @@ spec:
     version: "17"
     parameters:
       password_encryption: scram-sha-256
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: cluster01.n8n.owner
+  namespace: postgres
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: "5m"
+  secretStoreRefs:
+    - name: 1password
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: n8n-owner-user.cluster01.credentials.postgresql.acid.zalan.do
+  data:
+    - match:
+        secretKey: username
+        remoteRef:
+          remoteKey: postgres.cluster01.n8n.owner
+          property: username
+    - match:
+        secretKey: password
+        remoteRef:
+          remoteKey: postgres.cluster01.n8n.owner
+          property: password
 ---
 apiVersion: external-secrets.io/v1alpha1
 kind: PushSecret
@@ -140,4 +181,31 @@ spec:
         secretKey: password
         remoteRef:
           remoteKey: postgres.cluster01.vaultwarden.owner
+          property: password
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: cluster01.forgejo.owner
+  namespace: postgres
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: "5m"
+  secretStoreRefs:
+    - name: 1password
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: forgejo-owner-user.cluster01.credentials.postgresql.acid.zalan.do
+  data:
+    - match:
+        secretKey: username
+        remoteRef:
+          remoteKey: postgres.cluster01.forgejo.owner
+          property: username
+    - match:
+        secretKey: password
+        remoteRef:
+          remoteKey: postgres.cluster01.forgejo.owner
           property: password
