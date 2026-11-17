@@ -1,0 +1,90 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault
+  namespace: argocd
+spec:
+  destination:
+    namespace: vault
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    repoURL: https://openbao.github.io/openbao-helm
+    chart: openbao
+    targetRevision: 0.30.7
+    helm:
+      releaseName: openbao
+      valuesObject:
+        global:
+          tlsDisable: true
+        injector:
+          enabled: false
+        server:
+          authDelegator:
+            enabled: false
+          standalone:
+            enabled: true
+            config: |-
+              ui = true
+
+              listener "tcp" {
+                address = "[::]:8200"
+                tls_disable = true
+              }
+
+              storage "pebbledb" {
+                path = "/openbao/data/pebbledb"
+              }
+          dataStorage:
+            enabled: true
+            storageClass: hetzner-storagebox
+            size: 10Gi
+            accessMode: ReadWriteOnce
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            enabled: true
+            path: /v1/sys/health?sealedcode=200&uninitcode=200
+          readinessProbe:
+            enabled: true
+            path: "/v1/sys/health?sealedcode=200&uninitcode=200"
+          service:
+            type: ClusterIP
+            publishNotReadyAddresses: false
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vault-tailscale
+  namespace: vault
+  annotations:
+    tailscale.com/hostname: vault
+    tailscale.com/funnel: "false"
+spec:
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - vault
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: openbao
+                port:
+                  number: 8200

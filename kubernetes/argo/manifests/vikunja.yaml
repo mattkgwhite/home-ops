@@ -1,0 +1,189 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vikunja
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: vikunja
+  namespace: vikunja
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: 1password
+  target:
+    name: vikunja
+  data:
+    - secretKey: service-secret
+      remoteRef:
+        key: vikunja
+        property: service-secret
+    - secretKey: public-url
+      remoteRef:
+        key: vikunja
+        property: public-url
+    - secretKey: database-user
+      remoteRef:
+        key: postgres.cluster01.vikunja.owner
+        property: username
+    - secretKey: database-password
+      remoteRef:
+        key: postgres.cluster01.vikunja.owner
+        property: password
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vikunja-data
+  namespace: vikunja
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  storageClassName: hetzner-storagebox
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vikunja
+  namespace: vikunja
+automountServiceAccountToken: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vikunja
+  namespace: vikunja
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vikunja
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vikunja
+    spec:
+      serviceAccountName: vikunja
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: vikunja
+          image: vikunja/vikunja:2.8.0
+          env:
+            - name: VIKUNJA_SERVICE_PUBLICURL_FILE
+              value: /run/secrets/vikunja/public-url
+            - name: VIKUNJA_SERVICE_SECRET_FILE
+              value: /run/secrets/vikunja/service-secret
+            - name: VIKUNJA_DATABASE_TYPE
+              value: postgres
+            - name: VIKUNJA_DATABASE_HOST
+              value: cluster01.postgres.svc.cluster.local:5432
+            - name: VIKUNJA_DATABASE_DATABASE
+              value: vikunja
+            - name: VIKUNJA_DATABASE_SCHEMA
+              value: data
+            - name: VIKUNJA_DATABASE_SSLMODE
+              value: require
+            - name: VIKUNJA_DATABASE_USER_FILE
+              value: /run/secrets/vikunja/database-user
+            - name: VIKUNJA_DATABASE_PASSWORD_FILE
+              value: /run/secrets/vikunja/database-password
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: http
+              containerPort: 3456
+          startupProbe:
+            httpGet:
+              path: /api/v1/info
+              port: http
+            failureThreshold: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /api/v1/info
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /api/v1/info
+              port: http
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /app/vikunja/files
+              subPath: files
+            - name: secret
+              mountPath: /run/secrets/vikunja
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: vikunja-data
+        - name: secret
+          secret:
+            secretName: vikunja
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vikunja
+  namespace: vikunja
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: vikunja
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vikunja-tailscale
+  namespace: vikunja
+  annotations:
+    tailscale.com/hostname: vikunja
+    tailscale.com/funnel: "false"
+spec:
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - vikunja
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vikunja
+                port:
+                  number: 80
