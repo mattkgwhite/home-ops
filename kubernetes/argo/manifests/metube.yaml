@@ -29,21 +29,6 @@ metadata:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: metube-downloads
-  namespace: metube
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=false
-spec:
-  storageClassName: hetzner-storagebox
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 30Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
   name: metube-downloads-smb
   namespace: metube
   annotations:

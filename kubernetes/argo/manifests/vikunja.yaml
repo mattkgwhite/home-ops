@@ -39,21 +39,6 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: vikunja-data
-  namespace: vikunja
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=false
-spec:
-  storageClassName: hetzner-storagebox
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
   name: vikunja-data-smb
   namespace: vikunja
   annotations:
