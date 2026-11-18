@@ -33,6 +33,33 @@ spec:
         key: postgres.cluster01.forgejo.owner
         property: password
 ---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: forgejo-admin
+  namespace: git
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: 1password
+  target:
+    name: forgejo-admin
+    creationPolicy: Owner
+  data:
+    - secretKey: username
+      remoteRef:
+        key: forgejo-admin
+        property: username
+    - secretKey: email
+      remoteRef:
+        key: forgejo-admin
+        property: email
+    - secretKey: password
+      remoteRef:
+        key: forgejo-admin
+        property: password
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -73,9 +100,32 @@ spec:
         fsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
-      containers:
-        - name: forgejo
+      initContainers:
+        - name: bootstrap
           image: codeberg.org/forgejo/forgejo:15.0-rootless
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              case "${FORGEJO__server__ROOT_URL:?missing Forgejo root URL}" in
+                http://*|https://*) ;;
+                *) FORGEJO__server__ROOT_URL="https://$FORGEJO__server__ROOT_URL" ;;
+              esac
+              export FORGEJO__server__ROOT_URL="${FORGEJO__server__ROOT_URL%/}/"
+
+              /usr/local/bin/docker-setup.sh
+              forgejo -c "$GITEA_APP_INI" migrate
+
+              admins="$(forgejo -c "$GITEA_APP_INI" admin user list --admin)"
+              if ! printf '%s\n' "$admins" | awk -v username="$FORGEJO_ADMIN_USERNAME" '
+                $1 ~ /^[0-9]+$/ && tolower($2) == tolower(username) { found = 1 }
+                END { exit !found }
+              '; then
+                forgejo -c "$GITEA_APP_INI" admin user create --admin \
+                  --username "$FORGEJO_ADMIN_USERNAME" \
+                  --email "$FORGEJO_ADMIN_EMAIL" \
+                  --password "$FORGEJO_ADMIN_PASSWORD"
+              fi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -107,10 +157,55 @@ spec:
                   key: database-password
             - name: FORGEJO__database__SSL_MODE
               value: require
+            - name: FORGEJO__security__INSTALL_LOCK
+              value: "true"
             - name: FORGEJO__service__DISABLE_REGISTRATION
               value: "true"
             - name: FORGEJO__security__REVERSE_PROXY_TRUSTED_PROXIES
               value: "127.0.0.0/8,::1/128"
+            - name: FORGEJO__mailer__ENABLED
+              value: "true"
+            - name: FORGEJO__mailer__PROTOCOL
+              value: smtp
+            - name: FORGEJO__mailer__SMTP_ADDR
+              value: mailpit.mailpit.svc.cluster.local
+            - name: FORGEJO__mailer__SMTP_PORT
+              value: "1025"
+            - name: FORGEJO__mailer__FROM
+              value: forgejo@git.rat-shilling.ts.net
+            - name: FORGEJO_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-admin
+                  key: username
+            - name: FORGEJO_ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-admin
+                  key: email
+            - name: FORGEJO_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-admin
+                  key: password
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "2"
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/gitea
+      containers:
+        - name: forgejo
+          image: codeberg.org/forgejo/forgejo:15.0-rootless
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           ports:
             - name: http
               containerPort: 3000
