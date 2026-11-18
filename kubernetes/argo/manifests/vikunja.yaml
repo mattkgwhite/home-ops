@@ -52,6 +52,21 @@ spec:
       storage: 10Gi
 ---
 apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vikunja-data-smb
+  namespace: vikunja
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  storageClassName: hetzner-storagebox-per-pvc
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: vikunja
@@ -138,14 +153,13 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /app/vikunja/files
-              subPath: files
             - name: secret
               mountPath: /run/secrets/vikunja
               readOnly: true
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: vikunja-data
+            claimName: vikunja-data-smb
         - name: secret
           secret:
             secretName: vikunja

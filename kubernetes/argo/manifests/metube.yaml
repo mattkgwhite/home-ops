@@ -40,6 +40,21 @@ spec:
   resources:
     requests:
       storage: 30Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: metube-downloads-smb
+  namespace: metube
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  storageClassName: hetzner-storagebox-per-pvc
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30Gi
 # ---
 # apiVersion: networking.k8s.io/v1
 # kind: NetworkPolicy
@@ -144,7 +159,7 @@ spec:
       volumes:
         - name: downloads
           persistentVolumeClaim:
-            claimName: metube-downloads
+            claimName: metube-downloads-smb
 ---
 apiVersion: v1
 kind: Service

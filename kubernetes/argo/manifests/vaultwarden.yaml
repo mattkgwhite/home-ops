@@ -42,6 +42,21 @@ spec:
     requests:
       storage: 1Gi
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vaultwarden-files-smb
+  namespace: vaultwarden
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  storageClassName: hetzner-storagebox-per-pvc
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
@@ -123,8 +138,6 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /data
-          # The SMB StorageClass mounts the share root without a per-PVC subdirectory.
-          subPath: vaultwarden
         ports:
         - name: http
           containerPort: 8080
@@ -157,7 +170,7 @@ spec:
       volumes:
       - name: data
         persistentVolumeClaim:
-          claimName: vaultwarden-files
+          claimName: vaultwarden-files-smb
           readOnly: false
 ---
 apiVersion: v1

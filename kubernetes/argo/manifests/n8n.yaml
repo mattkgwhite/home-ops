@@ -49,6 +49,21 @@ spec:
     requests:
       storage: 10Gi
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: n8n-data-smb
+  namespace: n8n
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  storageClassName: hetzner-storagebox-per-pvc
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -154,7 +169,7 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: n8n-data
+            claimName: n8n-data-smb
 ---
 apiVersion: v1
 kind: Service

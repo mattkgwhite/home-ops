@@ -1,4 +1,19 @@
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: openbao-data-smb
+  namespace: vault
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  storageClassName: hetzner-storagebox-per-pvc
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -37,10 +52,14 @@ spec:
                 path = "/openbao/data/pebbledb"
               }
           dataStorage:
-            enabled: true
-            storageClass: hetzner-storagebox
-            size: 10Gi
-            accessMode: ReadWriteOnce
+            enabled: false
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: openbao-data-smb
+          volumeMounts:
+            - name: data
+              mountPath: /openbao/data
           resources:
             requests:
               cpu: 100m
