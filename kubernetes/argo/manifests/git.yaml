@@ -102,7 +102,7 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: bootstrap
-          image: codeberg.org/forgejo/forgejo:15.0-rootless
+          image: codeberg.org/forgejo/forgejo:17.0-rootless
           command:
             - /bin/sh
             - -ec
@@ -200,7 +200,7 @@ spec:
               mountPath: /var/lib/gitea
       containers:
         - name: forgejo
-          image: codeberg.org/forgejo/forgejo:15.0-rootless
+          image: codeberg.org/forgejo/forgejo:17.0-rootless
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
