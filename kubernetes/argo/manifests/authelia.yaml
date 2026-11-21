@@ -1,24 +1,4 @@
 ---
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: authelia.manifest
-  namespace: argocd
-spec:
-  destination:
-    namespace: authelia
-    server: https://kubernetes.default.svc
-  project: default
-  source:
-    repoURL: https://github.com/mattkgwhite/home-ops.git
-    targetRevision: main
-    path: kubernetes/argo/manifests
-    directory:
-      include: authelia.yaml
-  syncPolicy:
-    syncOptions:
-      - CreateNamespace=true
----
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -256,6 +236,9 @@ spec:
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
+    automated:
+      prune: false
+      selfHeal: true
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -265,6 +248,7 @@ metadata:
   annotations:
     tailscale.com/hostname: sso
     tailscale.com/funnel: "false"
+    tailscale.com/proxy-class: disable-udp-gso
 spec:
   ingressClassName: tailscale
   tls:

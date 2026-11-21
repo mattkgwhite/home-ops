@@ -162,6 +162,7 @@ metadata:
   annotations:
     tailscale.com/hostname: grafana
     tailscale.com/funnel: "false"
+    tailscale.com/proxy-class: disable-udp-gso
 spec:
   ingressClassName: tailscale
   tls:

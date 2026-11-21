@@ -1,76 +1,10 @@
 ---
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: homarr
-  namespace: argocd
-spec:
-  destination:
-    namespace: homarr
-    server: https://kubernetes.default.svc
-  project: default
-  source:
-    repoURL: https://github.com/mattkgwhite/home-ops.git
-    targetRevision: main
-    path: kubernetes/argo/manifests
-    directory:
-      include: homarr.yaml
-  syncPolicy:
-    syncOptions:
-      - CreateNamespace=true
----
 apiVersion: v1
 kind: Namespace
 metadata:
   name: homarr
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: homarr
-  namespace: homarr
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: homarr-kubernetes-reader
-rules:
-  - apiGroups: [""]
-    resources:
-      - pods
-      - services
-      - nodes
-      - namespaces
-      - configmaps
-      - secrets
-      - persistentvolumeclaims
-    verbs: [list]
-  - apiGroups: [apps]
-    resources: [replicasets]
-    verbs: [get]
-  - apiGroups: [networking.k8s.io]
-    resources: [ingresses]
-    verbs: [list]
-  - apiGroups: [metrics.k8s.io]
-    resources: [nodes]
-    verbs: [list]
-  - nonResourceURLs: [/version]
-    verbs: [get]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: homarr-kubernetes-reader
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: homarr-kubernetes-reader
-subjects:
-  - kind: ServiceAccount
-    name: homarr
-    namespace: homarr
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
@@ -122,94 +56,65 @@ spec:
         key: postgres.cluster01.homarr.owner
         property: password
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Application
 metadata:
   name: homarr
-  namespace: homarr
+  namespace: argocd
 spec:
-  replicas: 1
-  strategy:
-    type: Recreate
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: homarr
-      app.kubernetes.io/instance: homarr
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: homarr
-        app.kubernetes.io/instance: homarr
-    spec:
-      serviceAccountName: homarr
-      automountServiceAccountToken: true
-      # Homarr starts as root to set ownership, then switches to PUID/PGID.
-      securityContext:
-        seccompProfile:
-          type: RuntimeDefault
-      containers:
-        - name: homarr
-          image: ghcr.io/homarr-labs/homarr:v2.13.1
-          env:
-            - name: TZ
-              value: Europe/London
-            - name: PUID
-              value: "1000"
-            - name: PGID
-              value: "1000"
-            - name: SECRET_ENCRYPTION_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: homarr-encryption
-                  key: SECRET_ENCRYPTION_KEY
-            - name: DB_DRIVER
-              value: node-postgres
-            - name: DB_DIALECT
-              value: postgresql
-            - name: DB_URL
-              valueFrom:
-                secretKeyRef:
-                  name: homarr-postgres
-                  key: DB_URL
-            - name: ENABLE_DOCKER
-              value: "false"
-            - name: ENABLE_KUBERNETES
-              value: "true"
-          securityContext:
-            allowPrivilegeEscalation: false
-          ports:
-            - name: http
-              containerPort: 7575
-          startupProbe:
-            httpGet:
-              path: /api/health/ready
-              port: http
-            failureThreshold: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
-          readinessProbe:
-            httpGet:
-              path: /api/health/ready
-              port: http
-            timeoutSeconds: 5
-          livenessProbe:
-            httpGet:
-              path: /api/health/live
-              port: http
-            periodSeconds: 30
-            timeoutSeconds: 5
-          resources:
-            requests:
-              cpu: 100m
-              memory: 512Mi
-            limits:
-              memory: 1Gi
-          volumeMounts:
-            - name: data
-              mountPath: /appdata
-      volumes:
-        - name: data
-          emptyDir: {}
+  destination:
+    namespace: homarr
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    repoURL: https://homarr-labs.github.io/charts/
+    chart: homarr
+    targetRevision: 8.43.1
+    helm:
+      valuesObject:
+        strategyType: Recreate
+        service:
+          enabled: false
+        rbac:
+          enabled: true
+        env:
+          TZ: Europe/London
+          PUID: "1000"
+          PGID: "1000"
+        database:
+          type: postgresql
+        envSecrets:
+          dbCredentials:
+            existingSecret: homarr-postgres
+            dbUrlKey: DB_URL
+          dbEncryption:
+            existingSecret: homarr-encryption
+            key: SECRET_ENCRYPTION_KEY
+        podSecurityContext:
+          seccompProfile:
+            type: RuntimeDefault
+        securityContext:
+          allowPrivilegeEscalation: false
+        readinessProbe:
+          initialDelaySeconds: 0
+          timeoutSeconds: 5
+        livenessProbe:
+          # The upstream chart has no startup probe. Allow the original startup budget.
+          initialDelaySeconds: 300
+          periodSeconds: 30
+          timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 1Gi
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
 ---
 apiVersion: v1
 kind: Service
@@ -235,6 +140,7 @@ metadata:
   annotations:
     tailscale.com/hostname: homarr
     tailscale.com/funnel: "false"
+    tailscale.com/proxy-class: disable-udp-gso
 spec:
   ingressClassName: tailscale
   tls:

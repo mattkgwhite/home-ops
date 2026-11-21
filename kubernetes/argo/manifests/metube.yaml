@@ -18,6 +18,9 @@ spec:
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
+    automated:
+      prune: false
+      selfHeal: true
 ---
 apiVersion: v1
 kind: Namespace
@@ -170,6 +173,7 @@ metadata:
   annotations:
     tailscale.com/hostname: metube
     tailscale.com/funnel: "false"
+    tailscale.com/proxy-class: disable-udp-gso
 spec:
   ingressClassName: tailscale
   tls:

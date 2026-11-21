@@ -101,6 +101,18 @@ spec:
           - name: TS_DEBUG_INGRESS
             value: "true"
 ---
+apiVersion: tailscale.com/v1alpha1
+kind: ProxyClass
+metadata:
+  name: disable-udp-gso
+spec:
+  statefulSet:
+    pod:
+      tailscaleContainer:
+        env:
+          - name: TS_DEBUG_DISABLE_UDP_GSO
+            value: "true"
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -108,6 +120,7 @@ metadata:
   namespace: argocd
   annotations:
     tailscale.com/hostname: argo
+    tailscale.com/proxy-class: disable-udp-gso
 spec:
   ingressClassName: tailscale
   tls:
@@ -131,6 +144,7 @@ metadata:
   namespace: kube-system
   annotations:
     tailscale.com/hostname: hubble
+    tailscale.com/proxy-class: disable-udp-gso
 spec:
   ingressClassName: tailscale
   tls:
@@ -154,6 +168,7 @@ metadata:
   namespace: gotify
   annotations:
     tailscale.com/hostname: gotify
+    tailscale.com/proxy-class: disable-udp-gso
 spec:
   ingressClassName: tailscale
   tls:

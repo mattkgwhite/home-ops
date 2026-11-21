@@ -171,6 +171,7 @@ metadata:
   annotations:
     tailscale.com/hostname: rustfs
     tailscale.com/funnel: "false"
+    tailscale.com/proxy-class: disable-udp-gso
 spec:
   ingressClassName: tailscale
   tls:
@@ -195,6 +196,7 @@ metadata:
   annotations:
     tailscale.com/hostname: rusts3
     tailscale.com/funnel: "false"
+    tailscale.com/proxy-class: disable-udp-gso
 spec:
   ingressClassName: tailscale
   tls:

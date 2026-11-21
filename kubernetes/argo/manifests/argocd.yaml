@@ -189,6 +189,8 @@ spec:
     - git:
         requeueAfterSeconds: 300
         files:
+          - path: kubernetes/argo/manifests/authelia.yaml
+          # - path: kubernetes/argo/manifests/bookstack.yaml
           - path: kubernetes/argo/manifests/cert-manager.yaml
           - path: kubernetes/argo/manifests/crossplane.yaml
           - path: kubernetes/argo/manifests/excalidraw.yaml
@@ -198,6 +200,7 @@ spec:
           - path: kubernetes/argo/manifests/glance.yaml
           - path: kubernetes/argo/manifests/gotify.yaml
           - path: kubernetes/argo/manifests/hcloud.yaml
+          - path: kubernetes/argo/manifests/homarr.yaml
           - path: kubernetes/argo/manifests/kube-system.yaml
           - path: kubernetes/argo/manifests/monitoring.yaml
           - path: kubernetes/argo/manifests/n8n.yaml
@@ -209,10 +212,6 @@ spec:
           - path: kubernetes/argo/manifests/tailscale.yaml
           - path: kubernetes/argo/manifests/vault.yaml
           - path: kubernetes/argo/manifests/vikunja.yaml
-          # removed due to configuration conflicts that need to be resolved.
-          # configuration ownership needs to be amended to allow for argocd's management.
-          # - path: kubernetes/argo/manifests/metube.yaml
-          # - path: kubernetes/argo/manifests/homarr.yaml
         repoURL: https://github.com/mattkgwhite/home-ops.git
         revision: main
   goTemplate: true
