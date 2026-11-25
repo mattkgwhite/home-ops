@@ -1,0 +1,250 @@
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: kestra
+  labels:
+    # The chart's rootless Docker sidecar still requires privileged mode.
+    pod-security.kubernetes.io/enforce: privileged
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kestra
+  namespace: argocd
+spec:
+  destination:
+    namespace: kestra
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: kestra
+    repoURL: https://helm.kestra.io/
+    targetRevision: 2.0.7
+    helm:
+      releaseName: kestra
+      valuesObject:
+        fullnameOverride: kestra
+        common:
+          replicas: 1
+          # Local storage uses a ReadWriteOnce volume.
+          strategy:
+            type: Recreate
+          podSecurityContext:
+            fsGroup: 1000
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+            limits:
+              memory: 4Gi
+          extraEnv:
+            - name: TZ
+              value: Europe/London
+            - name: DOCKER_HOST
+              value: unix:///dind/docker.sock
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: kestra-postgres
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kestra-postgres
+                  key: password
+          extraVolumes:
+            - name: storage
+              persistentVolumeClaim:
+                claimName: kestra-data
+          extraVolumeMounts:
+            - name: storage
+              mountPath: /app/storage
+        serviceAccount:
+          automount: false
+        deployments:
+          standalone:
+            enabled: true
+        configurations:
+          application:
+            datasources:
+              postgres:
+                url: jdbc:postgresql://kestra-postgres:5432/kestra
+                driverClassName: org.postgresql.Driver
+                username: ${POSTGRES_USER}
+                password: ${POSTGRES_PASSWORD}
+            kestra:
+              queue:
+                type: postgres
+              repository:
+                type: postgres
+              storage:
+                type: local
+                local:
+                  base-path: /app/storage
+        service:
+          type: ClusterIP
+        ingress:
+          enabled: false
+        dind:
+          enabled: true
+          mode: rootless
+        extraManifests:
+          - apiVersion: external-secrets.io/v1
+            kind: ExternalSecret
+            metadata:
+              name: kestra-postgres
+              namespace: kestra
+              annotations:
+                argocd.argoproj.io/sync-wave: "-1"
+                argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+            spec:
+              refreshInterval: "5m"
+              secretStoreRef:
+                kind: ClusterSecretStore
+                name: 1password
+              target:
+                name: kestra-postgres
+                creationPolicy: Owner
+              data:
+                # The 1Password item must contain the database credentials before syncing.
+                - secretKey: username
+                  remoteRef:
+                    key: kestra-postgres
+                    property: username
+                - secretKey: password
+                  remoteRef:
+                    key: kestra-postgres
+                    property: password
+          - apiVersion: v1
+            kind: PersistentVolumeClaim
+            metadata:
+              name: kestra-data
+              namespace: kestra
+              annotations:
+                argocd.argoproj.io/sync-options: Prune=false
+            spec:
+              storageClassName: hetzner-storagebox
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 5Gi
+          - apiVersion: v1
+            kind: PersistentVolumeClaim
+            metadata:
+              name: kestra-postgres-data
+              namespace: kestra
+              annotations:
+                argocd.argoproj.io/sync-options: Prune=false
+            spec:
+              storageClassName: hetzner-storagebox
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 10Gi
+          - apiVersion: v1
+            kind: Service
+            metadata:
+              name: kestra-postgres
+              namespace: kestra
+            spec:
+              type: ClusterIP
+              clusterIP: None
+              ports:
+                - name: postgres
+                  port: 5432
+                  targetPort: postgres
+              selector:
+                app.kubernetes.io/name: kestra-postgres
+          - apiVersion: apps/v1
+            kind: StatefulSet
+            metadata:
+              name: kestra-postgres
+              namespace: kestra
+            spec:
+              serviceName: kestra-postgres
+              replicas: 1
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: kestra-postgres
+              template:
+                metadata:
+                  labels:
+                    app.kubernetes.io/name: kestra-postgres
+                spec:
+                  automountServiceAccountToken: false
+                  containers:
+                    - name: postgres
+                      image: postgres:17.11-bookworm
+                      env:
+                        - name: POSTGRES_DB
+                          value: kestra
+                        - name: PGDATA
+                          value: /var/lib/postgresql/data/pgdata
+                        - name: POSTGRES_USER
+                          valueFrom:
+                            secretKeyRef:
+                              name: kestra-postgres
+                              key: username
+                        - name: POSTGRES_PASSWORD
+                          valueFrom:
+                            secretKeyRef:
+                              name: kestra-postgres
+                              key: password
+                      ports:
+                        - name: postgres
+                          containerPort: 5432
+                      readinessProbe:
+                        exec:
+                          command:
+                            - sh
+                            - -c
+                            - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+                        periodSeconds: 10
+                      resources:
+                        requests:
+                          cpu: 100m
+                          memory: 256Mi
+                        limits:
+                          memory: 1Gi
+                      volumeMounts:
+                        - name: data
+                          mountPath: /var/lib/postgresql/data
+                  volumes:
+                    - name: data
+                      persistentVolumeClaim:
+                        claimName: kestra-postgres-data
+          - apiVersion: networking.k8s.io/v1
+            kind: Ingress
+            metadata:
+              name: kestra-tailscale
+              namespace: kestra
+              annotations:
+                tailscale.com/hostname: kestra
+                tailscale.com/funnel: "false"
+                tailscale.com/proxy-class: disable-udp-gso
+            spec:
+              ingressClassName: tailscale
+              tls:
+                - hosts:
+                    - kestra
+              rules:
+                - http:
+                    paths:
+                      - path: /
+                        pathType: Prefix
+                        backend:
+                          service:
+                            name: kestra
+                            port:
+                              number: 8080
+  syncPolicy:
+    # Keep sync manual until the deployment has been reviewed.
+    syncOptions:
+      - CreateNamespace=true
