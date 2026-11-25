@@ -34,6 +34,13 @@ spec:
         public:
           defaultRoles: false
           defaultUsers: false
+    kestra:
+      defaultUsers: true
+      extensions: {}
+      schemas:
+        public:
+          defaultRoles: false
+          defaultUsers: false
     grafana:
       defaultUsers: true
       extensions: {}
@@ -208,4 +215,31 @@ spec:
         secretKey: password
         remoteRef:
           remoteKey: postgres.cluster01.forgejo.owner
+          property: password
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: cluster01.kestra.owner
+  namespace: postgres
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: "5m"
+  secretStoreRefs:
+    - name: 1password
+      kind: ClusterSecretStore
+  selector:
+    secret:
+      name: kestra-owner-user.cluster01.credentials.postgresql.acid.zalan.do
+  data:
+    - match:
+        secretKey: username
+        remoteRef:
+          remoteKey: postgres.cluster01.kestra.owner
+          property: username
+    - match:
+        secretKey: password
+        remoteRef:
+          remoteKey: postgres.cluster01.kestra.owner
           property: password
