@@ -26,6 +26,8 @@ spec:
       valuesObject:
         fullnameOverride: kestra
         common:
+          nodeSelector:
+            kestra-dind: "true"
           replicas: 1
           # Local storage uses a ReadWriteOnce volume.
           strategy:
