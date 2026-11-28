@@ -266,6 +266,9 @@ file through `source.directory.include`. The file can contain child Helm
 Applications as well as resources such as namespaces, ExternalSecrets, and
 Ingresses.
 
+Deploy application workloads with a pinned Helm chart published by the upstream
+project. Get explicit approval from the repository owner before using another deployment source.
+
 For example, `gotify.manifest` reads `gotify.yaml` and manages the `gotify`
 Application and related manifest resources. The `gotify` Application manages
 the workloads rendered by its Helm chart. The two Applications represent
@@ -273,12 +276,14 @@ different levels of management.
 
 | Generated parent | File in `kubernetes/argo/manifests` | Child Applications |
 | --- | --- | --- |
+| `authelia.manifest` | `authelia.yaml` | `authelia` |
 | `cert-manager.manifest` | `cert-manager.yaml` | `cert-manager` |
 | `crossplane.manifest` | `crossplane.yaml` | `crossplane-system` |
 | `external-dns.manifest` | `external-dns.yaml` | `external-dns` |
 | `external-secrets.manifest` | `external-secrets.yaml` | `external-secrets` |
 | `gotify.manifest` | `gotify.yaml` | `gotify` |
 | `hcloud.manifest` | `hcloud.yaml` | `hcloud-csi` |
+| `homarr.manifest` | `homarr.yaml` | `homarr` |
 | `kube-system.manifest` | `kube-system.yaml` | `cilium`, `coredns`, `gatewaycrds`, `metrics-server` |
 | `monitoring.manifest` | `monitoring.yaml` | `grafana`, `kube-prometheus-stack`, `loki`, `fluentbit` when enabled |
 | `postgres.manifest` | `postgres.yaml` | None; manages the PostgreSQL custom resource and PushSecrets |
