@@ -6,9 +6,9 @@ Updated: 2026-11-09. The live Authelia Application was Healthy and Synced using 
 
 ## Configuration
 
-The [Authelia manifest](../../kubernetes/argo/manifests/authelia.yaml) defines two manually synced Argo CD Applications:
+Authelia uses two Applications with automated sync:
 
-- `authelia.manifest` manages this repository's Authelia file, including the namespace, secret references, database credential export, Tailscale Ingress, and Helm Application.
+- The `homelab-manifest` ApplicationSet in [argocd.yaml](../../kubernetes/argo/manifests/argocd.yaml) generates `authelia.manifest`. This Application manages the [Authelia manifest](../../kubernetes/argo/manifests/authelia.yaml), including the namespace, secret references, database credential export, Tailscale Ingress, and Helm Application.
 - `authelia` renders the official Helm chart `0.11.22` with application image `4.39.28`. The chart creates the Deployment, Service, ConfigMap, and ServiceAccount.
 
 The portal uses the Tailscale hostname configured in the manifest, with Funnel disabled. Its session cookie is limited to that exact hostname. Existing application routes are unchanged. This does not yet enable native OIDC clients or protect other applications through Envoy.
@@ -84,26 +84,17 @@ Enter the password at the prompt rather than passing it as a command-line argume
 
 These steps change the live cluster and are provided for a later deployment. None have been executed as part of preparing the manifest.
 
-1. Make the reviewed manifest changes available on the `main` branch used by Argo CD. Both Applications read from that branch, not this working tree.
-2. Sync `postgres.manifest` so the PostgreSQL operator creates the Authelia database and account. Check that the existing database and dependent applications remain healthy.
-3. Create the `authelia` 1Password item described above. Verify that the existing 1Password ClusterSecretStore, External Secrets controller, and Reloader are healthy.
-4. Bootstrap only the parent Application from the repository root:
-
-   ```zsh
-   mise x -- yq 'select(.kind == "Application" and .metadata.name == "authelia.manifest")' kubernetes/argo/manifests/authelia.yaml | mise x -- kubectl apply -f -
-   ```
-
-5. Manually sync `authelia.manifest`. This creates its companion resources and the child Helm Application. The ApplicationSet does not need a new entry because this parent explicitly tracks the file.
-6. Check the PushSecret and all three ExternalSecrets before syncing the Helm Application:
+1. Confirm `postgres.manifest` has synced and the PostgreSQL operator has created the Authelia database and account. Check that the existing database and dependent applications remain healthy.
+2. Create the `authelia` 1Password item described above. Verify that the existing 1Password ClusterSecretStore, External Secrets controller, and Reloader are healthy.
+3. Publish the reviewed changes to `main`. The ApplicationSet generates `authelia.manifest`, which syncs the companion resources and the `authelia` Helm Application.
+4. Verify that the PushSecret and all three ExternalSecrets have synchronized:
 
    ```zsh
    mise x -- kubectl get pushsecret cluster01.authelia.owner -n postgres
    mise x -- kubectl get externalsecrets -n authelia
    ```
 
-   Continue only after the credential export and secret synchronization report success. Sync order between the PostgreSQL and Authelia Applications is a manual prerequisite, not an enforced cross-Application dependency.
-
-7. Manually sync `authelia`. Verify the Deployment is Ready and the Tailscale operator has provisioned the portal Ingress:
+5. Verify the Deployment is Ready and the Tailscale operator has provisioned the portal Ingress:
 
    ```zsh
    mise x -- kubectl rollout status deployment/authelia -n authelia
@@ -112,15 +103,15 @@ These steps change the live cluster and are provided for a later deployment. Non
 
    The provisioned hostname must match the session cookie configuration. Resolve any Tailscale name collision before testing authentication.
 
-8. Open the portal while connected to the tailnet. Sign in, request enrollment, and open the [Mailpit inbox](https://mailpit.<tailnet>/). Find the newly captured Authelia message addressed to the email configured for your user. Follow that message's instructions and enroll TOTP. WebAuthn is also enabled; enroll a separate authenticator as a recovery option. No notification or credential contents should be added to this repository.
+6. Open the portal while connected to the tailnet. Sign in, request enrollment, and open the [Mailpit inbox](https://mailpit.<tailnet>/). Find the newly captured Authelia message addressed to the email configured for your user. Follow that message's instructions and enroll TOTP. WebAuthn is also enabled; enroll a separate authenticator as a recovery option. No notification or credential contents should be added to this repository.
 
-9. Test sign-in and MFA, then confirm that the portal is unreachable from a device outside the tailnet. Check the private hostname's TLS certificate and verify the lack of public exposure against the actual network configuration.
+7. Test sign-in and MFA, then confirm that the portal is unreachable from a device outside the tailnet. Check the private hostname's TLS certificate and verify the lack of public exposure against the actual network configuration.
 
 ## Password recovery and ongoing changes
 
 ### Activating the Mailpit notifier on an existing deployment
 
-After the reviewed notifier change is available on `main`, sync `authelia.manifest` first to update the child Application's Helm values, then sync `authelia` to regenerate the configuration and restart the pod. The restart clears the current in-memory login session.
+After the reviewed notifier change is available on `main`, wait for `authelia.manifest` and `authelia` to sync. The Helm values update regenerates the configuration and restarts the pod. The restart clears the current in-memory login session.
 
 Request a fresh enrollment or verification message after the rollout, then check Mailpit. Existing file-notifier messages are not imported. The SMTP startup check tests connectivity and recipient acceptance without sending a message, so successful startup alone does not populate the inbox.
 
@@ -130,7 +121,7 @@ The portal hostname is `sso.<tailnet>`. When renaming it, update all four refere
 
 Changing only the Ingress can load the login page while breaking `/api/state`. On 2026-11-10, the new `sso` Ingress was working but Authelia still used the old `auth` cookie domain. Its logs reported `no configured session cookie domain matches the url`, and the browser displayed `There was an issue retrieving the current user state`.
 
-After the corrected configuration is available on `main`, sync `authelia.manifest` and then `authelia`. Confirm the rollout and that the rendered cookie domain and `authelia_url` match the published Ingress hostname. Reopen the portal in a fresh browser session and sign in again.
+After the corrected configuration is available on `main`, wait for `authelia.manifest` and `authelia` to sync. Confirm the rollout and that the rendered cookie domain and `authelia_url` match the published Ingress hostname. Reopen the portal in a fresh browser session and sign in again.
 
 ### Recovering a password
 
