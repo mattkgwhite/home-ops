@@ -19,16 +19,18 @@
 - [X] Database
   - [X] Centralised Cluster / Operator - Postgres
 - [X] - Git / Source Control
-  - [ ] - Forgejo
+  - [X] Forgejo
 - [ ] Documentation
   - [ ] Full Documentation
   - [ ] WikiJS? - or an alternative?
-  - [ ] Excalidraw - Documentation drawings or an alternative
-- [ ] Management
-  - [ ] Vikunja - ToDo List
+  - [X] Excalidraw - Documentation drawings or an alternative
+- [X] Management
+  - [X] Vikunja - ToDo List
 - [ ] Automation
-  - [ ] - N8N
-  - [ ] - Kestra
+  - [X] N8N
+  - [X] Kestra
+  - [ ] Ansible
+  - [ ] Taskfile
 - [ ] External Access
   - [ ] Cloudflared
 - [X] Terraform
@@ -36,13 +38,14 @@
 - [ ] Backups
   - [ ] Scheduled / Automated
   - [ ] External Backups
-- [ ] Automation
-  - [ ] Ansible
-  - [ ] Taskfile
 - [ ] Security
-  - [ ] Vault
+  - [X] Vault
+    - [X] replace Vault with FOSS alternative "Openbao"
 - [ ] CI / CD
   - [ ] Argo Workflows
   - [ ] Argo Events
   - [ ] Argo Rollouts
   - [ ] Argo Image Updater
+- AudioBooks?
+  - [ ] Audiobookshelf
+  - [ ] Audiobooth iOS app
